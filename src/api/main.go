@@ -33,10 +33,10 @@ func main() {
 	logger := slog.New(logHandler)
 
 	// ROUTER
-	mux := handlers.NewRouter(handlers.MuxConfig{
-		Logger:      logger,
-		Environment: cfg.env,
-		Version:     version,
+	mux := handlers.NewRouter(handlers.RouterConfig{
+		Logger:          logger,
+		API_Environment: cfg.env,
+		API_Version:     version,
 	})
 	// SERVER
 	srv := &http.Server{
