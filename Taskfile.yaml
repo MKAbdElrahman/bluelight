@@ -1,0 +1,5 @@
+version: 3
+
+tasks:
+
+  run:  go run ./src/api {{.CLI_ARGS}}

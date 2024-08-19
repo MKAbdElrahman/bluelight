@@ -1,0 +1,5 @@
+
+POST  http://localhost:3000/v1/movies
+
+###
+GET http://localhost:3000/v1/movies/1
