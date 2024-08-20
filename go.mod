@@ -2,7 +2,10 @@ module bluelight.mkcodedev.com
 
 go 1.23.0
 
-require github.com/charmbracelet/log v0.4.0
+require (
+	github.com/charmbracelet/log v0.4.0
+	github.com/go-chi/chi/v5 v5.1.0
+)
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
