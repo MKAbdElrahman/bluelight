@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"bluelight.mkcodedev.com/src/api/handlers/jsonio"
 	"bluelight.mkcodedev.com/src/core/domain"
 )
 
@@ -26,7 +27,7 @@ func newShowMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
 			Version:          1,
 		}
 
-		err = sendJSON(w, envelope{"movie": m}, http.StatusOK, nil)
+		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": m}, http.StatusOK, nil)
 		if err != nil {
 			internal(logger, w, r, err)
 			return

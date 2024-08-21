@@ -3,6 +3,8 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+
+	"bluelight.mkcodedev.com/src/api/handlers/jsonio"
 )
 
 // internal responds with a 500 Internal Server Error error.
@@ -24,9 +26,14 @@ func methodNotAllowed(logger *slog.Logger, w http.ResponseWriter, r *http.Reques
 	sendJSONError(logger, w, r, http.StatusMethodNotAllowed, message)
 }
 
+// methodNotAllowed responds with a 405 Method Not Allowed error.
+func badRequest(logger *slog.Logger, w http.ResponseWriter, r *http.Request, msg string) {
+	sendJSONError(logger, w, r, http.StatusBadRequest, msg)
+}
+
 func sendJSONError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, status int, message any) {
-	data := envelope{"error": message}
-	err := sendJSON(w, data, status, nil)
+	data := jsonio.Envelope{"error": message}
+	err := jsonio.SendJSON(w, data, status, nil)
 	if err != nil {
 		logError(logger, r, err)
 		w.WriteHeader(http.StatusInternalServerError)

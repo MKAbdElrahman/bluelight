@@ -1,4 +1,4 @@
-package handlers
+package jsonio
 
 import (
 	"encoding/json"
@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-type envelope map[string]any
+type Envelope map[string]any
 
-func sendJSON(w http.ResponseWriter, data envelope, httpStatus int, headers http.Header) error {
+func SendJSON(w http.ResponseWriter, data Envelope, httpStatus int, headers http.Header) error {
 	js, err := json.Marshal(data)
 	if err != nil {
 		return errors.New("failed to marshal data to json")
@@ -23,5 +23,3 @@ func sendJSON(w http.ResponseWriter, data envelope, httpStatus int, headers http
 	w.Write([]byte(js))
 	return nil
 }
-
-
