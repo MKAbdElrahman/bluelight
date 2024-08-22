@@ -21,7 +21,7 @@ func newHealthCheckHandlerFunc(logger *slog.Logger, env, version string) http.Ha
 		}
 		err := jsonio.SendJSON(w, jsonio.Envelope{"health_check": health}, http.StatusOK, nil)
 		if err != nil {
-			internal(logger, w, r, err)
+			sendInternalError(logger, w, r, err)
 			return
 		}
 	}

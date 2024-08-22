@@ -23,11 +23,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	// INVALID ROUTES HANDLERS
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		notFound(cfg.Logger, w, r)
+		sendNotFoundError(cfg.Logger, w, r)
 	})
 
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		methodNotAllowed(cfg.Logger, w, r)
+		sendMethodNotAllowedError(cfg.Logger, w, r)
 	})
 	// ROUTES
 	r.Get("/v1/healthcheck", newHealthCheckHandlerFunc(cfg.Logger, cfg.API_Environment, cfg.API_Version))

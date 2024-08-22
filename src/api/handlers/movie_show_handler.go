@@ -14,7 +14,7 @@ func newShowMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		parsedId, err := parseIdFromPath(r)
 		if err != nil || parsedId < 1 {
-			notFound(logger, w, r)
+			sendNotFoundError(logger, w, r)
 			return
 		}
 
@@ -29,7 +29,7 @@ func newShowMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
 
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": m}, http.StatusOK, nil)
 		if err != nil {
-			internal(logger, w, r, err)
+			sendInternalError(logger, w, r, err)
 			return
 		}
 

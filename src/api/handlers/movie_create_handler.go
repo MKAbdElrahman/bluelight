@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -14,8 +13,13 @@ func newCreateMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
 		var request v1.CreateMovieRequest
 		err := jsonio.NewJSONReader().ReadJSON(r, &request.Body)
 		if err != nil {
-			badRequest(logger, w, r, err.Error())
+			sendBadRequestError(logger, w, r, err)
+			return
 		}
-		fmt.Println(request.Body)
+		vErrors := request.Validate()
+		if vErrors.Length() > 0 {
+			sendValidationError(logger, w, r, vErrors)
+			return
+		}
 	}
 }
