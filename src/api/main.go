@@ -32,9 +32,10 @@ func main() {
 	}
 
 	var cfg struct {
-		port int
-		env  string
-		db   struct {
+		port    int
+		env     string
+		version bool
+		db      struct {
 			dsn          string
 			maxOpenConns int
 			maxIdleConns int
@@ -48,8 +49,14 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
+	flag.BoolVar(&cfg.version, "version", false, "Show API version")
 
 	flag.Parse()
+
+	if cfg.version {
+		fmt.Printf("API Version: %s\n", version)
+		os.Exit(0)
+	}
 
 	// POSTGRESQL
 	db, err := openDB(cfg.db.dsn, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
