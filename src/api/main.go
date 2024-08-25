@@ -73,6 +73,7 @@ func main() {
 		Logger:          logger,
 		API_Environment: cfg.env,
 		API_Version:     version,
+		DB:              db,
 	})
 	// SERVER
 	srv := &http.Server{

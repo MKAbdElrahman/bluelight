@@ -1,26 +1,39 @@
 package handlers
 
 import (
-	"log/slog"
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
+	"bluelight.mkcodedev.com/src/api/handlers/errormanager"
+	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func newCreateMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
+func newCreateMovieHandlerFunc(em *errormanager.ErrorManager, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var request v1.CreateMovieRequest
 		err := jsonio.NewJSONReader().ReadJSON(r, &request.Body)
 		if err != nil {
-			sendClientError(logger, w, r, v1.BadRequestError.WithDetails(map[string]string{
+			em.SendClientError(w, r, v1.BadRequestError.WithDetails(map[string]string{
 				"error": err.Error(),
 			}))
 			return
 		}
 		vErrors := request.Validate()
 		if vErrors.Length() > 0 {
-			sendClientError(logger, w, r, v1.UnprocessableEntityError.WithDetails(vErrors.Details()))
+			em.SendClientError(w, r, v1.UnprocessableEntityError.WithDetails(vErrors.Details()))
+			return
+		}
+
+		err = movieService.CreateMovie(&domain.Movie{
+			Title:            request.Body.Title,
+			Year:             int32(request.Body.Year),
+			Genres:           request.Body.Genres,
+			RuntimeInMinutes: int32(request.Body.Runtime),
+		})
+
+		if err != nil {
+			em.SendServerError(w, r, v1.InternalServerError)
 			return
 		}
 	}
