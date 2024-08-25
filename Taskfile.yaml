@@ -1,5 +1,40 @@
 version: 3
 
+dotenv: ["./resources/.env"]
+env:
+  MIGRATIONS_DIR: ./src/infrastructure/db/migrations
+  POSTGRESQL_URL: "{{.BLUELIGHT_DB_DSN}}"
 tasks:
+  ## API
 
-  run:  go run ./src/api {{.CLI_ARGS}}
+  run: go run ./src/api {{.CLI_ARGS}}
+  psql: psql  $POSTGRESQL_URL
+
+  ## DATABASE MIGRATIONS
+
+  migrate-install: go install -tags "postgres,mysql,sqlite" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+  migrate-new:
+    desc: task migrate -- [migration_pair_name]
+    cmds:
+      - migrate create -seq -ext=.sql -dir=$MIGRATIONS_DIR {{.CLI_ARGS}}
+
+  migrate-up:
+    desc: execute migrations
+    cmds:
+      - migrate -path=$MIGRATIONS_DIR -database=$POSTGRESQL_URL up
+  migrate-down:
+    desc: down all migrations
+    cmds:
+      - migrate -path=$MIGRATIONS_DIR -database=$POSTGRESQL_URL down 
+  migrate-goto:
+    desc: migrate to a specific version
+    cmds:
+      - migrate -path=$MIGRATIONS_DIR -database=$POSTGRESQL_URL  goto {{.CLI_ARGS}}
+  migrate-force:
+    desc: used after manually fixing errors in SQL migrations (manual rolling back) 
+    cmds:
+      - migrate -path=$MIGRATIONS_DIR -database=$POSTGRESQL_URL force {{.CLI_ARGS}}
+  migrate-schema-version:
+    desc: used for see which migration version database is currently on
+    cmds:
+      - migrate -path=$MIGRATIONS_DIR -database=$POSTGRESQL_URL version
