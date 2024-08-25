@@ -5,58 +5,27 @@ import (
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	"bluelight.mkcodedev.com/src/api/handlers/jsonio"
+	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func sendAPIError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, apiErr v1.ApiError) {
-	data := jsonio.Envelope{"error": apiErr}
-	err := jsonio.SendJSON(w, data, apiErr.Code, nil)
+// sendServerError handles server-side errors.
+func sendServerError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, serverErr v1.ServerError) {
+	data := jsonio.Envelope{"error": serverErr}
+	err := jsonio.SendJSON(w, data, serverErr.Code, nil)
 	if err != nil {
 		logError(logger, r, err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func sendInternalError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, err error) {
-	logError(logger, r, err)
-	message := http.StatusText(http.StatusInternalServerError)
-	sendAPIError(logger, w, r, v1.ApiError{
-		Code:    http.StatusInternalServerError,
-		Message: message,
-	})
-}
-
-func sendNotFoundError(logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
-	code := http.StatusNotFound
-	sendAPIError(logger, w, r, v1.ApiError{
-		Code:    code,
-		Message: http.StatusText(code),
-	})
-}
-
-func sendMethodNotAllowedError(logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
-	code := http.StatusMethodNotAllowed
-	sendAPIError(logger, w, r, v1.ApiError{
-		Code:    code,
-		Message: http.StatusText(code),
-	})
-}
-
-func sendBadRequestError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, err error) {
-	code := http.StatusBadRequest
-	sendAPIError(logger, w, r, v1.ApiError{
-		Code:    code,
-		Message: err.Error(),
-	})
-}
-
-func sendValidationError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, errors v1.ValidationError) {
-	code := http.StatusUnprocessableEntity
-	sendAPIError(logger, w, r, v1.ApiError{
-		Code:    code,
-		Message: http.StatusText(code),
-		Details: errors.Errors,
-	})
+// sendClientError handles client-side errors.
+func sendClientError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, clientErr v1.ClientError) {
+	data := jsonio.Envelope{"error": clientErr}
+	err := jsonio.SendJSON(w, data, clientErr.Code, nil)
+	if err != nil {
+		logError(logger, r, err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func logError(logger *slog.Logger, r *http.Request, err error) {

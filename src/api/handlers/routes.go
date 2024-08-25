@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -23,11 +24,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	// INVALID ROUTES HANDLERS
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		sendNotFoundError(cfg.Logger, w, r)
+		sendClientError(cfg.Logger, w, r, v1.NotFoundError)
 	})
 
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		sendMethodNotAllowedError(cfg.Logger, w, r)
+		sendClientError(cfg.Logger, w, r, v1.MethodNotAllowedError)
 	})
 	// ROUTES
 	r.Get("/v1/healthcheck", newHealthCheckHandlerFunc(cfg.Logger, cfg.API_Environment, cfg.API_Version))

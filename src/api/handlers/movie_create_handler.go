@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	"bluelight.mkcodedev.com/src/api/handlers/jsonio"
+	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
 func newCreateMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
@@ -13,12 +13,14 @@ func newCreateMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
 		var request v1.CreateMovieRequest
 		err := jsonio.NewJSONReader().ReadJSON(r, &request.Body)
 		if err != nil {
-			sendBadRequestError(logger, w, r, err)
+			sendClientError(logger, w, r, v1.BadRequestError.WithDetails(map[string]string{
+				"error": err.Error(),
+			}))
 			return
 		}
 		vErrors := request.Validate()
 		if vErrors.Length() > 0 {
-			sendValidationError(logger, w, r, vErrors)
+			sendClientError(logger, w, r, v1.UnprocessableEntityError.WithDetails(vErrors.Details()))
 			return
 		}
 	}

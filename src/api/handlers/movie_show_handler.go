@@ -6,15 +6,16 @@ import (
 	"strconv"
 	"time"
 
-	"bluelight.mkcodedev.com/src/api/handlers/jsonio"
+	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
 func newShowMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		parsedId, err := parseIdFromPath(r)
 		if err != nil || parsedId < 1 {
-			sendNotFoundError(logger, w, r)
+			sendClientError(logger, w, r, v1.NotFoundError)
 			return
 		}
 
@@ -29,7 +30,7 @@ func newShowMovieHandlerFunc(logger *slog.Logger) http.HandlerFunc {
 
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": m}, http.StatusOK, nil)
 		if err != nil {
-			sendInternalError(logger, w, r, err)
+			sendServerError(logger, w, r, v1.InternalServerError)
 			return
 		}
 

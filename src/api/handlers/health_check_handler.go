@@ -4,7 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"bluelight.mkcodedev.com/src/api/handlers/jsonio"
+	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
+	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
 func newHealthCheckHandlerFunc(logger *slog.Logger, env, version string) http.HandlerFunc {
@@ -21,7 +22,7 @@ func newHealthCheckHandlerFunc(logger *slog.Logger, env, version string) http.Ha
 		}
 		err := jsonio.SendJSON(w, jsonio.Envelope{"health_check": health}, http.StatusOK, nil)
 		if err != nil {
-			sendInternalError(logger, w, r, err)
+			sendServerError(logger, w, r, v1.InternalServerError)
 			return
 		}
 	}

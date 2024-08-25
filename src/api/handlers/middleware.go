@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 )
 
 type middleware func(next http.Handler) http.Handler
@@ -16,7 +18,10 @@ func panicRecoverer(logger *slog.Logger) middleware {
 				defer func() {
 					if err := recover(); err != nil {
 						w.Header().Set("Connection", "close")
-						sendInternalError(logger, w, r, fmt.Errorf("%s", err))
+						sendServerError(logger, w, r, v1.ServerError{
+							Message: fmt.Sprintf("%s", err),
+							Code:    http.StatusInternalServerError,
+						})
 					}
 				}()
 				next.ServeHTTP(w, r)

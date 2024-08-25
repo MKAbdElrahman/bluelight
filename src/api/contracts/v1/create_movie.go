@@ -11,8 +11,8 @@ type CreateMovieRequest struct {
 	}
 }
 
-func (r CreateMovieRequest) Validate() ValidationError {
-	v := ValidationError{Errors: make(map[string]string)}
+func (r CreateMovieRequest) Validate() validationError {
+	v := validationError{Errors: make(map[string]string)}
 
 	// Validate Title
 	if r.Body.Title == "" {
