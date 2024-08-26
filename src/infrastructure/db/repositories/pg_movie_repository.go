@@ -63,7 +63,19 @@ func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
 }
 
 func (r *postgresMovieRepositry) Update(m *domain.Movie) error {
-	return nil
+	query := `
+UPDATE movies
+SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+WHERE id = $5
+RETURNING version`
+	args := []any{
+		m.Title,
+		m.Year,
+		m.RuntimeInMinutes,
+		pq.Array(m.Genres),
+		m.Id,
+	}
+	return r.db.QueryRow(query, args...).Scan(&m.Version)
 }
 
 func (r *postgresMovieRepositry) Delete(id int64) error {

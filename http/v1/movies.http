@@ -9,4 +9,16 @@ POST    http://localhost:3000/v1/movies
 }
 
 ###
-GET http://localhost:3000/v1/movies/1
+GET http://localhost:3000/v1/movies/10
+
+
+
+###
+PUT    http://localhost:3000/v1/movies/1
+
+ {
+  "title": "The Shawshank Redemption",
+  "year": 1900,
+  "runtime": 143,
+  "genres": ["Drama", "Prison"]
+}

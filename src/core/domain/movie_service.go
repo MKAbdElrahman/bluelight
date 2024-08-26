@@ -14,6 +14,10 @@ func (svc *MovieService) CreateMovie(m *Movie) error {
 	return svc.movieRepository.Create(m)
 }
 
+func (svc *MovieService) UpdateMovie(m *Movie) error {
+	return svc.movieRepository.Update(m)
+}
+
 func (svc *MovieService) GetMovie(id int64) (*Movie, error) {
 	return svc.movieRepository.Read(id)
 }

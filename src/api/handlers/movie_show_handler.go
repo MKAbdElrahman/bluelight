@@ -19,7 +19,7 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 			return
 		}
 
-		m, err := movieService.GetMovie(int64(parsedId))
+		m, err := movieService.GetMovie(parsedId)
 
 		if err != nil {
 			switch {
@@ -39,8 +39,8 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 	}
 }
 
-func parseIdFromPath(r *http.Request) (int, error) {
+func parseIdFromPath(r *http.Request) (int64, error) {
 	idFromPath := r.PathValue("id")
-	parsedId, err := strconv.Atoi(idFromPath)
+	parsedId, err := strconv.ParseInt(idFromPath, 10, 64)
 	return parsedId, err
 }

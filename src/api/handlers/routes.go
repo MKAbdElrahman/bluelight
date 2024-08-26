@@ -49,6 +49,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	// ROUTES
 	r.Get("/v1/healthcheck", newHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", newCreateMovieHandlerFunc(em, movieService))
+	r.Put("/v1/movies/{id}", newUpdateMovieHandlerFunc(em, movieService))
 	r.Get("/v1/movies/{id}", newShowMovieHandlerFunc(em, movieService))
 
 	return r
