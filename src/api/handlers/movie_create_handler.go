@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
@@ -25,12 +26,32 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			return
 		}
 
-		err = movieService.CreateMovie(&domain.Movie{
+		m := &domain.Movie{
 			Title:            request.Body.Title,
 			Year:             int32(request.Body.Year),
 			Genres:           request.Body.Genres,
 			RuntimeInMinutes: int32(request.Body.Runtime),
-		})
+		}
+		err = movieService.CreateMovie(m)
+
+		if err != nil {
+			em.SendServerError(w, r, v1.InternalServerError)
+			return
+		}
+
+		headers := make(http.Header)
+		headers.Set("Location", fmt.Sprintf("/v1/movies/%d", m.Id))
+
+		res := v1.CreateMovieResponse{
+			Id:               m.Id,
+			Title:            m.Title,
+			Year:             m.Year,
+			Version:          m.Version,
+			RuntimeInMinutes: m.RuntimeInMinutes,
+			Genres:           m.Genres,
+		}
+
+		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 
 		if err != nil {
 			em.SendServerError(w, r, v1.InternalServerError)

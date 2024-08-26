@@ -3,15 +3,14 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
+	errorhandler "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
+func newDeleteMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		parsedId, err := parseIdFromPath(r)
 		if err != nil || parsedId < 1 {
@@ -19,7 +18,7 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 			return
 		}
 
-		m, err := movieService.GetMovie(parsedId)
+		err = movieService.DeleteMovie(parsedId)
 
 		if err != nil {
 			switch {
@@ -30,14 +29,10 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 			}
 			return
 		}
-		res := v1.ShowMovieResponse{
-			Id:               m.Id,
-			Title:            m.Title,
-			Year:             m.Year,
-			Version:          m.Version,
-			RuntimeInMinutes: m.RuntimeInMinutes,
-			Genres:           m.Genres,
+
+		res := v1.DeleteMovieResponse{
 		}
+		
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
 			em.SendServerError(w, r, v1.InternalServerError)
@@ -45,10 +40,4 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 		}
 
 	}
-}
-
-func parseIdFromPath(r *http.Request) (int64, error) {
-	idFromPath := r.PathValue("id")
-	parsedId, err := strconv.ParseInt(idFromPath, 10, 64)
-	return parsedId, err
 }

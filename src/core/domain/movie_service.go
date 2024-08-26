@@ -21,3 +21,7 @@ func (svc *MovieService) UpdateMovie(m *Movie) error {
 func (svc *MovieService) GetMovie(id int64) (*Movie, error) {
 	return svc.movieRepository.Read(id)
 }
+
+func (svc *MovieService) DeleteMovie(id int64) error {
+	return svc.movieRepository.Delete(id)
+}

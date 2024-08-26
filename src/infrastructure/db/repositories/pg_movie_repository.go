@@ -79,5 +79,26 @@ RETURNING version`
 }
 
 func (r *postgresMovieRepositry) Delete(id int64) error {
+
+	if id < 1 {
+		return domain.ErrRecordNotFound
+	}
+	query := `
+	DELETE FROM movies
+	WHERE id = $1`
+
+	result, err := r.db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return domain.ErrRecordNotFound
+	}
 	return nil
 }

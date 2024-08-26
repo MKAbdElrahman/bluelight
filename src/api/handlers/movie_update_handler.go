@@ -56,14 +56,20 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			em.SendServerError(w, r, v1.InternalServerError)
 			return
 		}
-
-		jsonio.SendJSON(w, jsonio.Envelope{"movie": v1.UpdateMovieResponse{
+		res := v1.UpdateMovieResponse{
 			Id:               m.Id,
 			Title:            m.Title,
 			Year:             m.Year,
 			Version:          m.Version,
 			RuntimeInMinutes: m.RuntimeInMinutes,
 			Genres:           m.Genres,
-		}}, http.StatusCreated, nil)
+		}
+		
+		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
+
+		if err != nil {
+			em.SendServerError(w, r, v1.InternalServerError)
+			return
+		}
 	}
 }

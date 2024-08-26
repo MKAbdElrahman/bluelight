@@ -51,6 +51,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Post("/v1/movies", newCreateMovieHandlerFunc(em, movieService))
 	r.Put("/v1/movies/{id}", newUpdateMovieHandlerFunc(em, movieService))
 	r.Get("/v1/movies/{id}", newShowMovieHandlerFunc(em, movieService))
+	r.Delete("/v1/movies/{id}", newDeleteMovieHandlerFunc(em, movieService))
 
 	return r
 }
