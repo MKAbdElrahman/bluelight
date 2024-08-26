@@ -1,4 +1,4 @@
-package errormanager
+package errorhandler
 
 import (
 	"fmt"
@@ -10,15 +10,14 @@ import (
 )
 
 // ErrorManager handles error logging and responses.
-type ErrorManager struct {
+type ErrorHandeler struct {
 	logger          *slog.Logger
 	LogClientErrors bool
 	LogServerErrors bool
 }
 
-// NewErrorManager creates a new ErrorManager with customizable logging options.
-func NewErrorManager(logger *slog.Logger) *ErrorManager {
-	return &ErrorManager{
+func NewErrorHandler(logger *slog.Logger) *ErrorHandeler {
+	return &ErrorHandeler{
 		logger:          logger,
 		LogClientErrors: false,
 		LogServerErrors: true,
@@ -26,7 +25,7 @@ func NewErrorManager(logger *slog.Logger) *ErrorManager {
 }
 
 // SendServerError handles server-side errors.
-func (e *ErrorManager) SendServerError(w http.ResponseWriter, r *http.Request, serverErr v1.ServerError) {
+func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, serverErr v1.ServerError) {
 	if e.LogServerErrors {
 		logError(e.logger, r, fmt.Errorf(serverErr.InternalMessage), serverErr.Code)
 	}
@@ -43,9 +42,9 @@ func (e *ErrorManager) SendServerError(w http.ResponseWriter, r *http.Request, s
 }
 
 // SendClientError handles client-side errors.
-func (e *ErrorManager) SendClientError(w http.ResponseWriter, r *http.Request, clientErr v1.ClientError) {
+func (e *ErrorHandeler) SendClientError(w http.ResponseWriter, r *http.Request, clientErr v1.ClientError) {
 	if e.LogClientErrors {
-		logWarn(e.logger, r, fmt.Errorf(clientErr.UserFacingMessage), clientErr.Code)
+		logError(e.logger, r, fmt.Errorf(clientErr.UserFacingMessage), clientErr.Code)
 	}
 
 	data := jsonio.Envelope{"error": clientErr}
@@ -63,13 +62,10 @@ func logError(logger *slog.Logger, r *http.Request, err error, statusCode int) {
 		method = r.Method
 		uri    = r.URL.RequestURI()
 	)
-	logger.Error(err.Error(), "method", method, "uri", uri, "status_code", statusCode)
-}
+	if statusCode < 500 {
+		logger.Error(err.Error(), "type", "client error", "method", method, "uri", uri, "status_code", statusCode)
+		return
+	}
+	logger.Error(err.Error(), "type", "server error", "method", method, "uri", uri, "status_code", statusCode)
 
-func logWarn(logger *slog.Logger, r *http.Request, err error, statusCode int) {
-	var (
-		method = r.Method
-		uri    = r.URL.RequestURI()
-	)
-	logger.Warn(err.Error(), "method", method, "uri", uri, "status_code", statusCode)
 }

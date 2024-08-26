@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	"bluelight.mkcodedev.com/src/api/handlers/errormanager"
+	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func newCreateMovieHandlerFunc(em *errormanager.ErrorManager, movieService *domain.MovieService) http.HandlerFunc {
+func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var request v1.CreateMovieRequest
 		err := jsonio.NewJSONReader().ReadJSON(r, &request.Body)

@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	"bluelight.mkcodedev.com/src/api/handlers/errormanager"
+	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
+	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/infrastructure/db/repositories"
 	"github.com/go-chi/chi/v5"
@@ -22,14 +23,14 @@ type RouterConfig struct {
 func NewRouter(cfg RouterConfig) http.Handler {
 	r := chi.NewRouter()
 
-	em := errormanager.NewErrorManager(cfg.Logger)
+	em := errorhandler.NewErrorHandler(cfg.Logger)
 	em.LogClientErrors = true
 	em.LogServerErrors = true
 
 	// MIDDLEWARE
-	r.Use(requestSizeLimiter(1_048_576)) // 1MB
-	r.Use(requestLogger(cfg.Logger))
-	r.Use(panicRecoverer(em))
+	r.Use(middleware.RequestSizeLimiter(1_048_576)) // 1MB
+	r.Use(middleware.RequestLogger(cfg.Logger))
+	r.Use(middleware.PanicRecoverer(em))
 
 	// INVALID ROUTES HANDLERS
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +49,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	// ROUTES
 	r.Get("/v1/healthcheck", newHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", newCreateMovieHandlerFunc(em, movieService))
-	r.Get("/v1/movies/{id}", newShowMovieHandlerFunc(em))
+	r.Get("/v1/movies/{id}", newShowMovieHandlerFunc(em, movieService))
 
 	return r
 }

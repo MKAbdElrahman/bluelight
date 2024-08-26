@@ -1,17 +1,17 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	"bluelight.mkcodedev.com/src/api/handlers/errormanager"
+	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func newShowMovieHandlerFunc(em *errormanager.ErrorManager) http.HandlerFunc {
+func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		parsedId, err := parseIdFromPath(r)
 		if err != nil || parsedId < 1 {
@@ -19,15 +19,17 @@ func newShowMovieHandlerFunc(em *errormanager.ErrorManager) http.HandlerFunc {
 			return
 		}
 
-		m := domain.Movie{
-			Id:               int64(parsedId),
-			CreatedAt:        time.Now(),
-			Title:            "Casablanca",
-			RuntimeInMinutes: 102,
-			Genres:           []string{"drama", "romance", "war"},
-			Version:          1,
-		}
+		m, err := movieService.GetMovie(int64(parsedId))
 
+		if err != nil {
+			switch {
+			case errors.Is(err, domain.ErrRecordNotFound):
+				em.SendClientError(w, r, v1.NotFoundError)
+			default:
+				em.SendServerError(w, r, v1.InternalServerError)
+			}
+			return
+		}
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": m}, http.StatusOK, nil)
 		if err != nil {
 			em.SendServerError(w, r, v1.InternalServerError)

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 
 	"bluelight.mkcodedev.com/src/core/domain"
 	"github.com/lib/pq"
@@ -28,7 +29,37 @@ RETURNING id, created_at, version`
 }
 
 func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
-	return nil, nil
+
+	if id < 1 {
+		return nil, domain.ErrRecordNotFound
+	}
+
+	query := `
+	SELECT id, created_at, title, year, runtime, genres, version
+	FROM movies
+	WHERE id = $1`
+
+	var movie domain.Movie
+
+	err := r.db.QueryRow(query, id).Scan(
+		&movie.Id,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.RuntimeInMinutes,
+		pq.Array(&movie.Genres),
+		&movie.Version,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, domain.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &movie, nil
 }
 
 func (r *postgresMovieRepositry) Update(m *domain.Movie) error {

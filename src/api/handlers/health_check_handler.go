@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	"bluelight.mkcodedev.com/src/api/handlers/errormanager"
+	errorhandler "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func newHealthCheckHandlerFunc(em *errormanager.ErrorManager, env, version string) http.HandlerFunc {
+func newHealthCheckHandlerFunc(eh *errorhandler.ErrorHandeler, env, version string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		health := struct {
@@ -22,7 +22,7 @@ func newHealthCheckHandlerFunc(em *errormanager.ErrorManager, env, version strin
 		}
 		err := jsonio.SendJSON(w, jsonio.Envelope{"health_check": health}, http.StatusOK, nil)
 		if err != nil {
-			em.SendServerError(w, r, v1.InternalServerError)
+			eh.SendServerError(w, r, v1.InternalServerError)
 			return
 		}
 	}
