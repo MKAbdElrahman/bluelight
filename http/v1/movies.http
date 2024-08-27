@@ -13,7 +13,7 @@ GET http://localhost:3000/v1/movies/1
 
 
 ###
-PUT    http://localhost:3000/v1/movies/2
+PATCH  http://localhost:3000/v1/movies/2
 
  {
   "title": "The Shawshank Redemption",
