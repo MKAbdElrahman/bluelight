@@ -46,10 +46,15 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			m.Genres = req.Body.Genres
 		}
 
-		
 		domainErr = movieService.UpdateMovie(m)
+
 		if domainErr != nil {
-			em.SendServerError(w, r, v1.InternalServerError)
+			switch {
+			case errors.Is(domainErr, domain.ErrEditConflict):
+				em.SendClientError(w, r, v1.ConflictError)
+			default:
+				em.SendServerError(w, r, v1.InternalServerError)
+			}
 			return
 		}
 

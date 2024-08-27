@@ -66,7 +66,7 @@ func (r *postgresMovieRepositry) Update(m *domain.Movie) error {
 	query := `
 UPDATE movies
 SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
-WHERE id = $5
+WHERE id = $5 AND version = $6
 RETURNING version`
 	args := []any{
 		m.Title,
@@ -74,8 +74,22 @@ RETURNING version`
 		m.RuntimeInMinutes,
 		pq.Array(m.Genres),
 		m.Id,
+		m.Version,
 	}
-	return r.db.QueryRow(query, args...).Scan(&m.Version)
+
+	err := r.db.QueryRow(query, args...).Scan(&m.Version)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return domain.ErrEditConflict
+		default:
+			return err
+		}
+	}
+
+	return nil
+
 }
 
 func (r *postgresMovieRepositry) Delete(id int64) error {

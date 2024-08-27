@@ -2,6 +2,7 @@
 POST    http://localhost:3000/v1/movies
 
  {
+  "title": "The Shawshank Redemption",
   "year": 1900,
   "runtime": 142,
   "genres": ["Drama", "Prison"]
@@ -13,11 +14,11 @@ GET http://localhost:3000/v1/movies/1
 
 
 ###
-PATCH  http://localhost:3000/v1/movies/2
+PATCH    http://localhost:3000/v1/movies/2
 
  {
   "title": "The Shawshank Redemption",
-  "year": 1900,
+  "year": 100,
   "runtime": 143,
   "genres": ["Drama", "Prison"]
 }

@@ -3,5 +3,6 @@ package domain
 import "errors"
 
 var (
-	ErrRecordNotFound = errors.New("error record not found")
+	ErrEditConflict   = errors.New("edit conflict")
+	ErrRecordNotFound = errors.New("record not found")
 )
