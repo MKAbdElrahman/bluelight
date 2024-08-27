@@ -50,7 +50,7 @@ func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
 
 	var movie domain.Movie
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
