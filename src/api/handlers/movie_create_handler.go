@@ -28,7 +28,10 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 
 		err := movieService.CreateMovie(m)
 		if err != nil {
-			em.SendServerError(w, r, v1.InternalServerError)
+			em.SendServerError(w, r, v1.ServerError{
+				Code:            http.StatusInternalServerError,
+				InternalMessage: err.Error(),
+			})
 			return
 		}
 
@@ -43,7 +46,10 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
-			em.SendServerError(w, r, v1.InternalServerError)
+			em.SendServerError(w, r, v1.ServerError{
+				Code:            http.StatusInternalServerError,
+				InternalMessage: err.Error(),
+			})
 			return
 		}
 	}

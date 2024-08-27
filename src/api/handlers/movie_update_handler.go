@@ -27,12 +27,14 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			case errors.Is(domainErr, domain.ErrRecordNotFound):
 				em.SendClientError(w, r, v1.NotFoundError)
 			default:
-				em.SendServerError(w, r, v1.InternalServerError)
+				em.SendServerError(w, r, v1.ServerError{
+					Code:            http.StatusInternalServerError,
+					InternalMessage: domainErr.Error(),
+				})
 			}
 			return
 		}
 
-		
 		if req.Body.Title != nil {
 			m.Title = *req.Body.Title
 		}
@@ -53,7 +55,10 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			case errors.Is(domainErr, domain.ErrEditConflict):
 				em.SendClientError(w, r, v1.ConflictError)
 			default:
-				em.SendServerError(w, r, v1.InternalServerError)
+				em.SendServerError(w, r, v1.ServerError{
+					Code:            http.StatusInternalServerError,
+					InternalMessage: domainErr.Error(),
+				})
 			}
 			return
 		}
@@ -70,7 +75,10 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 
 		err := jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
-			em.SendServerError(w, r, v1.InternalServerError)
+			em.SendServerError(w, r, v1.ServerError{
+				Code:            http.StatusInternalServerError,
+				InternalMessage: err.Error(),
+			})
 			return
 		}
 	}

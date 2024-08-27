@@ -1,20 +1,28 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"bluelight.mkcodedev.com/src/core/domain"
 	"github.com/lib/pq"
 )
 
-type postgresMovieRepositry struct {
-	db *sql.DB
+type PostgresMovieRepositryConfig struct {
+	Timeout time.Duration
 }
 
-func NewPostgresMovieRepository(db *sql.DB) *postgresMovieRepositry {
+type postgresMovieRepositry struct {
+	db     *sql.DB
+	config PostgresMovieRepositryConfig
+}
+
+func NewPostgresMovieRepository(db *sql.DB, config PostgresMovieRepositryConfig) *postgresMovieRepositry {
 	return &postgresMovieRepositry{
-		db: db,
+		db:     db,
+		config: config,
 	}
 }
 
@@ -24,8 +32,9 @@ INSERT INTO movies (title, year, runtime, genres)
 VALUES ($1, $2, $3, $4)
 RETURNING id, created_at, version`
 	args := []any{m.Title, m.Year, m.RuntimeInMinutes, pq.Array(m.Genres)}
-
-	return r.db.QueryRow(query, args...).Scan(&m.Id, &m.CreatedAt, &m.Version)
+	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
+	defer cancel()
+	return r.db.QueryRowContext(ctx, query, args...).Scan(&m.Id, &m.CreatedAt, &m.Version)
 }
 
 func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
@@ -41,7 +50,10 @@ func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
 
 	var movie domain.Movie
 
-	err := r.db.QueryRow(query, id).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&movie.Id,
 		&movie.CreatedAt,
 		&movie.Title,
@@ -77,7 +89,10 @@ RETURNING version`
 		m.Version,
 	}
 
-	err := r.db.QueryRow(query, args...).Scan(&m.Version)
+	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
+	defer cancel()
+
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&m.Version)
 
 	if err != nil {
 		switch {
@@ -101,7 +116,10 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 	DELETE FROM movies
 	WHERE id = $1`
 
-	result, err := r.db.Exec(query, id)
+	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
+	defer cancel()
+
+	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}

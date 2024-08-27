@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"time"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
@@ -43,7 +44,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	// INFRASTRUCTURE
 
-	movieRepository := repositories.NewPostgresMovieRepository(cfg.DB)
+	movieRepository := repositories.NewPostgresMovieRepository(
+		cfg.DB,
+		repositories.PostgresMovieRepositryConfig{
+			Timeout: 3 * time.Second,
+		})
 	movieService := domain.NewMovieService(movieRepository)
 
 	// ROUTES

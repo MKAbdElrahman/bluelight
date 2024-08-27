@@ -26,7 +26,10 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 			case errors.Is(err, domain.ErrRecordNotFound):
 				em.SendClientError(w, r, v1.NotFoundError)
 			default:
-				em.SendServerError(w, r, v1.InternalServerError)
+				em.SendServerError(w, r, v1.ServerError{
+					Code:            http.StatusInternalServerError,
+					InternalMessage: err.Error(),
+				})
 			}
 			return
 		}
@@ -40,7 +43,10 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 		}
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
-			em.SendServerError(w, r, v1.InternalServerError)
+			em.SendServerError(w, r, v1.ServerError{
+				Code:            http.StatusInternalServerError,
+				InternalMessage: err.Error(),
+			})
 			return
 		}
 
