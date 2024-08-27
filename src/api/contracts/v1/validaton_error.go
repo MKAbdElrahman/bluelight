@@ -1,15 +1,18 @@
 package v1
 
-// Errors intended to be read by external clients
-
+// validationError represents errors intended to be read by external clients
 type validationError struct {
 	Errors map[string]string `json:"validation_errors"`
 }
 
-func (v validationError) Length() int {
-	return len(v.Errors)
+// addError adds a new error message to the validationError
+func (v validationError) addError(field, message string) {
+	if v.Errors == nil {
+		v.Errors = make(map[string]string)
+	}
+	v.Errors[field] = message
 }
 
-func (v validationError) Details() map[string]string {
-	return v.Errors
+func (v validationError) Length() int {
+	return len(v.Errors)
 }

@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
@@ -13,13 +12,14 @@ import (
 
 func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		parsedId, err := parseIdFromPath(r)
-		if err != nil || parsedId < 1 {
-			em.SendClientError(w, r, v1.NotFoundError)
+		// Request
+		req, requestErr := v1.NewShowMovieRequest(r)
+		if requestErr != nil {
+			em.SendClientError(w, r, requestErr)
 			return
 		}
 
-		m, err := movieService.GetMovie(parsedId)
+		m, err := movieService.GetMovie(req.IdPathParam)
 
 		if err != nil {
 			switch {
@@ -45,10 +45,4 @@ func newShowMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 		}
 
 	}
-}
-
-func parseIdFromPath(r *http.Request) (int64, error) {
-	idFromPath := r.PathValue("id")
-	parsedId, err := strconv.ParseInt(idFromPath, 10, 64)
-	return parsedId, err
 }

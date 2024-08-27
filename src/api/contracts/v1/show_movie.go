@@ -4,6 +4,24 @@ import (
 	"net/http"
 )
 
+type ShowMovieRequest struct {
+	IdPathParam int64
+}
+
+func NewShowMovieRequest(r *http.Request) (ShowMovieRequest, *ClientError) {
+
+	parsedId, err := parseIdFromPath(r)
+	if err != nil {
+		return ShowMovieRequest{}, BadRequestError
+	}
+
+	req := ShowMovieRequest{
+		IdPathParam: parsedId,
+	}
+
+	return req, nil
+}
+
 // ShowMovieResponse represents the response structure for showing a movie.
 type ShowMovieResponse struct {
 	Id               int64    `json:"id"`

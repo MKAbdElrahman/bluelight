@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
@@ -12,35 +11,25 @@ import (
 
 func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var request v1.CreateMovieRequest
-		err := jsonio.NewJSONReader().ReadJSON(r, &request.Body)
-		if err != nil {
-			em.SendClientError(w, r, v1.BadRequestError.WithDetails(map[string]string{
-				"error": err.Error(),
-			}))
-			return
-		}
-		vErrors := request.Validate()
-		if vErrors.Length() > 0 {
-			em.SendClientError(w, r, v1.UnprocessableEntityError.WithDetails(vErrors.Details()))
+		// Request
+		req, requestErr := v1.NewCreateMovieRequest(r)
+		if requestErr != nil {
+			em.SendClientError(w, r, requestErr)
 			return
 		}
 
 		m := &domain.Movie{
-			Title:            request.Body.Title,
-			Year:             int32(request.Body.Year),
-			Genres:           request.Body.Genres,
-			RuntimeInMinutes: int32(request.Body.Runtime),
+			Title:            req.Body.Title,
+			Year:             req.Body.Year,
+			Genres:           req.Body.Genres,
+			RuntimeInMinutes: req.Body.Runtime,
 		}
-		err = movieService.CreateMovie(m)
 
+		err := movieService.CreateMovie(m)
 		if err != nil {
 			em.SendServerError(w, r, v1.InternalServerError)
 			return
 		}
-
-		headers := make(http.Header)
-		headers.Set("Location", fmt.Sprintf("/v1/movies/%d", m.Id))
 
 		res := v1.CreateMovieResponse{
 			Id:               m.Id,
@@ -52,7 +41,6 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 		}
 
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
-
 		if err != nil {
 			em.SendServerError(w, r, v1.InternalServerError)
 			return

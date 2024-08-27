@@ -42,7 +42,7 @@ func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, 
 }
 
 // SendClientError handles client-side errors.
-func (e *ErrorHandeler) SendClientError(w http.ResponseWriter, r *http.Request, clientErr v1.ClientError) {
+func (e *ErrorHandeler) SendClientError(w http.ResponseWriter, r *http.Request, clientErr *v1.ClientError) {
 	if e.LogClientErrors {
 		logError(e.logger, r, fmt.Errorf(clientErr.UserFacingMessage), clientErr.Code)
 	}

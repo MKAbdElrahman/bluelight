@@ -12,13 +12,14 @@ import (
 
 func newDeleteMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		parsedId, err := parseIdFromPath(r)
-		if err != nil || parsedId < 1 {
-			em.SendClientError(w, r, v1.NotFoundError)
+		// Request
+		req, requestErr := v1.NewDeleteMovieRequest(r)
+		if requestErr != nil {
+			em.SendClientError(w, r, requestErr)
 			return
 		}
 
-		err = movieService.DeleteMovie(parsedId)
+		err := movieService.DeleteMovie(req.IdPathParam)
 
 		if err != nil {
 			switch {
@@ -30,9 +31,8 @@ func newDeleteMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			return
 		}
 
-		res := v1.DeleteMovieResponse{
-		}
-		
+		res := v1.DeleteMovieResponse{}
+
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
 			em.SendServerError(w, r, v1.InternalServerError)

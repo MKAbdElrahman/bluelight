@@ -12,18 +12,19 @@ import (
 
 func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		parsedId, err := parseIdFromPath(r)
-		if err != nil || parsedId < 1 {
-			em.SendClientError(w, r, v1.NotFoundError)
+		// Request
+		req, requestErr := v1.NewUpdateMovieRequest(r)
+		if requestErr != nil {
+			em.SendClientError(w, r, requestErr)
 			return
 		}
 
-		m, err := movieService.GetMovie(int64(parsedId))
+		// Business
 
-		if err != nil {
+		m, domainErr := movieService.GetMovie(req.IdPathParam)
+		if domainErr != nil {
 			switch {
-			case errors.Is(err, domain.ErrRecordNotFound):
+			case errors.Is(domainErr, domain.ErrRecordNotFound):
 				em.SendClientError(w, r, v1.NotFoundError)
 			default:
 				em.SendServerError(w, r, v1.InternalServerError)
@@ -31,31 +32,18 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			return
 		}
 
-		var request v1.UpdateMovieRequest
-		err = jsonio.NewJSONReader().ReadJSON(r, &request.Body)
-		if err != nil {
-			em.SendClientError(w, r, v1.BadRequestError.WithDetails(map[string]string{
-				"error": err.Error(),
-			}))
-			return
-		}
-		vErrors := request.Validate()
+		m.Title = req.Body.Title
+		m.Genres = req.Body.Genres
+		m.RuntimeInMinutes = req.Body.Runtime
+		m.Year = req.Body.Year
 
-		if vErrors.Length() > 0 {
-			em.SendClientError(w, r, v1.UnprocessableEntityError.WithDetails(vErrors.Details()))
-			return
-		}
-
-		m.Title = request.Body.Title
-		m.Genres = request.Body.Genres
-		m.RuntimeInMinutes = request.Body.Runtime
-		m.Year = request.Body.Year
-
-		err = movieService.UpdateMovie(m)
-		if err != nil {
+		domainErr = movieService.UpdateMovie(m)
+		if domainErr != nil {
 			em.SendServerError(w, r, v1.InternalServerError)
 			return
 		}
+
+		// Response
 		res := v1.UpdateMovieResponse{
 			Id:               m.Id,
 			Title:            m.Title,
@@ -64,9 +52,8 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			RuntimeInMinutes: m.RuntimeInMinutes,
 			Genres:           m.Genres,
 		}
-		
-		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 
+		err := jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
 			em.SendServerError(w, r, v1.InternalServerError)
 			return

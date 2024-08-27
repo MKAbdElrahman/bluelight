@@ -6,6 +6,21 @@ import (
 
 // DeleteMovieRequest represents the request structure for deleting a movie.
 type DeleteMovieRequest struct {
+	IdPathParam int64
+}
+
+func NewDeleteMovieRequest(r *http.Request) (DeleteMovieRequest, *ClientError) {
+
+	parsedId, err := parseIdFromPath(r)
+	if err != nil {
+		return DeleteMovieRequest{}, BadRequestError
+	}
+
+	req := DeleteMovieRequest{
+		IdPathParam: parsedId,
+	}
+
+	return req, nil
 }
 
 // DeleteMovieResponse represents the response structure for deleting a movie.

@@ -11,13 +11,7 @@ type MovieDetails struct {
 	Genres  []string `json:"genres"`
 }
 
-func (v *validationError) addError(field, message string) {
-	if v.Errors == nil {
-		v.Errors = make(map[string]string)
-	}
-	v.Errors[field] = message
-}
-
+// validateMovieDetails validates the MovieDetails struct and returns a validationError
 func validateMovieDetails(details MovieDetails) validationError {
 	v := validationError{Errors: make(map[string]string)}
 

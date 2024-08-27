@@ -3,11 +3,33 @@ package v1
 import (
 	"fmt"
 	"net/http"
+
+	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
 // CreateMovieRequest represents the request structure for creating a movie.
 type CreateMovieRequest struct {
 	Body MovieDetails `json:"body"`
+}
+
+func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *ClientError) {
+
+	var body MovieDetails
+
+	err := jsonio.NewJSONReader().ReadJSON(r, &body)
+	if err != nil {
+		return CreateMovieRequest{}, BadRequestError
+	}
+
+	req := CreateMovieRequest{
+		Body:        body,
+	}
+
+	vErrs := req.Validate()
+	if len(vErrs.Errors) != 0 {
+		return CreateMovieRequest{}, BadRequestError.WithDetails(vErrs.Errors)
+	}
+	return req, nil
 }
 
 // CreateMovieResponse represents the response structure for creating a movie.
