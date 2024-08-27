@@ -32,11 +32,21 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			return
 		}
 
-		m.Title = req.Body.Title
-		m.Genres = req.Body.Genres
-		m.RuntimeInMinutes = req.Body.Runtime
-		m.Year = req.Body.Year
+		
+		if req.Body.Title != nil {
+			m.Title = *req.Body.Title
+		}
+		if req.Body.Year != nil {
+			m.Year = *req.Body.Year
+		}
+		if req.Body.Runtime != nil {
+			m.RuntimeInMinutes = *req.Body.Runtime
+		}
+		if req.Body.Genres != nil {
+			m.Genres = req.Body.Genres
+		}
 
+		
 		domainErr = movieService.UpdateMovie(m)
 		if domainErr != nil {
 			em.SendServerError(w, r, v1.InternalServerError)

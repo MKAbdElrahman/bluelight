@@ -4,17 +4,25 @@ import (
 	"fmt"
 	"net/http"
 
+	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
 // CreateMovieRequest represents the request structure for creating a movie.
 type CreateMovieRequest struct {
-	Body MovieDetails `json:"body"`
+	Body CreateMovieRequestBody `json:"body"`
+}
+
+type CreateMovieRequestBody struct {
+	Title   string   `json:"title"`
+	Year    int32    `json:"year"`
+	Runtime int32    `json:"runtime"`
+	Genres  []string `json:"genres"`
 }
 
 func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *ClientError) {
 
-	var body MovieDetails
+	var body CreateMovieRequestBody
 
 	err := jsonio.NewJSONReader().ReadJSON(r, &body)
 	if err != nil {
@@ -22,12 +30,21 @@ func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *ClientError) {
 	}
 
 	req := CreateMovieRequest{
-		Body:        body,
+		Body: body,
 	}
 
-	vErrs := req.Validate()
-	if len(vErrs.Errors) != 0 {
-		return CreateMovieRequest{}, BadRequestError.WithDetails(vErrs.Errors)
+	movie := &domain.Movie{
+		Title:            req.Body.Title,
+		Year:             req.Body.Year,
+		Genres:           req.Body.Genres,
+		RuntimeInMinutes: req.Body.Runtime,
+	}
+
+	err = domain.NewMovieValidator(movie).ValidateAll().Errors()
+	if err != nil {
+		return CreateMovieRequest{}, UnprocessableEntityError.WithDetails(map[string]string{
+			"validation_error": err.Error(),
+		})
 	}
 	return req, nil
 }
@@ -54,7 +71,3 @@ func (r CreateMovieResponse) Headers() http.Header {
 	return headers
 }
 
-// Validate validates the CreateMovieRequest.
-func (r CreateMovieRequest) Validate() validationError {
-	return validateMovieDetails(r.Body)
-}

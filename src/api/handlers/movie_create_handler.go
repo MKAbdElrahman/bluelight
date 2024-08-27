@@ -18,6 +18,7 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 			return
 		}
 
+		// Business
 		m := &domain.Movie{
 			Title:            req.Body.Title,
 			Year:             req.Body.Year,

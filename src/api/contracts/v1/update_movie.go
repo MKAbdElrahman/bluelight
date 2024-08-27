@@ -5,13 +5,21 @@ import (
 	"net/http"
 	"strconv"
 
+	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
 // UpdateMovieRequest represents the request structure for updating a movie.
 type UpdateMovieRequest struct {
-	Body        MovieDetails `json:"body"`
+	Body        UpdateMovieRequestBody `json:"body"`
 	IdPathParam int64
+}
+
+type UpdateMovieRequestBody struct {
+	Title   *string  `json:"title"`
+	Year    *int32   `json:"year"`
+	Runtime *int32   `json:"runtime"`
+	Genres  []string `json:"genres"`
 }
 
 func NewUpdateMovieRequest(r *http.Request) (UpdateMovieRequest, *ClientError) {
@@ -21,7 +29,7 @@ func NewUpdateMovieRequest(r *http.Request) (UpdateMovieRequest, *ClientError) {
 		return UpdateMovieRequest{}, BadRequestError
 	}
 
-	var body MovieDetails
+	var body UpdateMovieRequestBody
 
 	err = jsonio.NewJSONReader().ReadJSON(r, &body)
 	if err != nil {
@@ -33,10 +41,31 @@ func NewUpdateMovieRequest(r *http.Request) (UpdateMovieRequest, *ClientError) {
 		IdPathParam: parsedId,
 	}
 
-	vErrs := req.Validate()
-	if len(vErrs.Errors) != 0 {
-		return UpdateMovieRequest{}, BadRequestError.WithDetails(vErrs.Errors)
+	m := &domain.Movie{}
+	validator := domain.NewMovieValidator(m)
+
+	if req.Body.Title != nil {
+		m.Title = *req.Body.Title
+		validator.ValidateTitle()
 	}
+	if req.Body.Year != nil {
+		m.Year = *req.Body.Year
+		validator.ValidateYear()
+	}
+	if req.Body.Runtime != nil {
+		m.RuntimeInMinutes = *req.Body.Runtime
+		validator.ValidateRuntimeInMinutes()
+	}
+	if req.Body.Genres != nil {
+		m.Genres = req.Body.Genres
+	}
+
+	if err := validator.Errors(); err != nil {
+		return UpdateMovieRequest{}, UnprocessableEntityError.WithDetails(map[string]string{
+			"validation_error": err.Error(),
+		})
+	}
+
 	return req, nil
 }
 
@@ -60,11 +89,6 @@ func (r UpdateMovieResponse) Headers() http.Header {
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", r.Id))
 	return headers
-}
-
-// Validate validates the UpdateMovieRequest.
-func (r UpdateMovieRequest) Validate() validationError {
-	return validateMovieDetails(r.Body)
 }
 
 func parseIdFromPath(r *http.Request) (int64, error) {
