@@ -22,6 +22,10 @@ func (svc *MovieService) GetMovie(id int64) (*Movie, error) {
 	return svc.movieRepository.Read(id)
 }
 
+func (svc *MovieService) GetAllMovies(filters MovieFilters) ([]*Movie, error) {
+	return svc.movieRepository.ReadAll(filters)
+}
+
 func (svc *MovieService) DeleteMovie(id int64) error {
 	return svc.movieRepository.Delete(id)
 }

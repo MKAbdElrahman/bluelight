@@ -3,7 +3,6 @@ package v1
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
@@ -89,10 +88,4 @@ func (r UpdateMovieResponse) Headers() http.Header {
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", r.Id))
 	return headers
-}
-
-func parseIdFromPath(r *http.Request) (int64, error) {
-	idFromPath := r.PathValue("id")
-	parsedId, err := strconv.ParseInt(idFromPath, 10, 64)
-	return parsedId, err
 }

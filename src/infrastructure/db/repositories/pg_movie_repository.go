@@ -134,3 +134,42 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 	}
 	return nil
 }
+
+func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, error) {
+	query := `
+SELECT id, created_at, title, year, runtime, genres, version
+FROM movies
+ORDER BY id`
+
+	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
+	defer cancel()
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	movies := []*domain.Movie{}
+
+	for rows.Next() {
+		var movie domain.Movie
+		err := rows.Scan(
+			&movie.Id,
+			&movie.CreatedAt,
+			&movie.Title,
+			&movie.Year,
+			&movie.RuntimeInMinutes,
+			pq.Array(&movie.Genres),
+			&movie.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, &movie)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return movies, nil
+}
