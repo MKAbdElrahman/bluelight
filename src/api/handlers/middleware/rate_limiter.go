@@ -12,7 +12,13 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func RateLimiter(em *errorhandler.ErrorHandeler) middlewareFunc {
+type RateLimiterConfig struct {
+	Burst   int
+	RPS     float64
+	Enabled bool
+}
+
+func RateLimiter(em *errorhandler.ErrorHandeler, cfg RateLimiterConfig) middlewareFunc {
 	return func(next http.Handler) http.Handler {
 
 		type client struct {
@@ -37,27 +43,28 @@ func RateLimiter(em *errorhandler.ErrorHandeler) middlewareFunc {
 		}()
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				em.SendServerError(w, r, v1.ServerError{
-					InternalMessage: fmt.Sprintf("%s", err),
-					Code:            http.StatusInternalServerError,
-				})
-				return
-			}
-			mu.Lock()
-			if _, found := clients[ip]; !found {
-				clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
-			}
+			if cfg.Enabled {
+				ip, _, err := net.SplitHostPort(r.RemoteAddr)
+				if err != nil {
+					em.SendServerError(w, r, v1.ServerError{
+						InternalMessage: fmt.Sprintf("%s", err),
+						Code:            http.StatusInternalServerError,
+					})
+					return
+				}
+				mu.Lock()
+				if _, found := clients[ip]; !found {
+					clients[ip] = &client{limiter: rate.NewLimiter(rate.Limit(cfg.RPS), cfg.Burst)}
+				}
+				clients[ip].lastSeen = time.Now()
 
-			clients[ip].lastSeen = time.Now()
-
-			if !clients[ip].limiter.Allow() {
+				if !clients[ip].limiter.Allow() {
+					mu.Unlock()
+					em.SendClientError(w, r, v1.TooManyRequestsError)
+					return
+				}
 				mu.Unlock()
-				em.SendClientError(w, r, v1.TooManyRequestsError)
-				return
 			}
-			mu.Unlock()
 			next.ServeHTTP(w, r)
 		})
 	}

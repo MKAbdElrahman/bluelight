@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"bluelight.mkcodedev.com/src/api/handlers"
+	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"github.com/charmbracelet/log"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -41,6 +42,7 @@ func main() {
 			maxIdleConns int
 			maxIdleTime  time.Duration
 		}
+		limiter middleware.RateLimiterConfig
 	}
 
 	flag.IntVar(&cfg.port, "port", 3000, "API server port")
@@ -50,7 +52,9 @@ func main() {
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
 	flag.BoolVar(&cfg.version, "version", false, "Show API version")
-
+	flag.Float64Var(&cfg.limiter.RPS, "limiter-rps", 2, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.Burst, "limiter-burst", 4, "Rate limiter maximum burst")
+	flag.BoolVar(&cfg.limiter.Enabled, "limiter-enabled", true, "Enable rate limiter")
 	flag.Parse()
 
 	if cfg.version {
@@ -74,6 +78,7 @@ func main() {
 		API_Environment: cfg.env,
 		API_Version:     version,
 		DB:              db,
+		LimiterConfig:   cfg.limiter,
 	})
 	// SERVER
 	srv := &http.Server{
