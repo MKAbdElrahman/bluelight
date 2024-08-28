@@ -29,6 +29,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	em.LogServerErrors = true
 
 	// MIDDLEWARE
+	r.Use(middleware.RateLimiter(em))
 	r.Use(middleware.RequestSizeLimiter(1_048_576)) // 1MB
 	r.Use(middleware.RequestLogger(cfg.Logger))
 	r.Use(middleware.PanicRecoverer(em))

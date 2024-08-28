@@ -54,6 +54,11 @@ var (
 		Code:              422,
 		UserFacingMessage: "The server understands the content type of the request entity, but was unable to process the contained instructions.",
 	}
+
+	TooManyRequestsError = &ClientError{
+		Code:              429,
+		UserFacingMessage: "The user has sent too many requests in a given amount of time ('rate limiting').",
+	}
 )
 
 // ServerError represents errors that occur on the server-side.
