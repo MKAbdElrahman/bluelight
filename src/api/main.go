@@ -19,6 +19,23 @@ import (
 
 const version = "0.0.2"
 
+type serverConfig struct {
+	port            int
+	env             string
+	version         bool
+	readTimeout     time.Duration
+	writeTimeout    time.Duration
+	idleTimeout     time.Duration
+	shutdownTimeout time.Duration
+}
+
+type dbConfig struct {
+	dsn          string
+	maxOpenConns int
+	maxIdleConns int
+	maxIdleTime  time.Duration
+}
+
 func main() {
 	// LOGGING
 	logHandler := log.NewWithOptions(os.Stdout, log.Options{
@@ -33,37 +50,38 @@ func main() {
 	}
 
 	var cfg struct {
-		port    int
-		env     string
-		version bool
-		db      struct {
-			dsn          string
-			maxOpenConns int
-			maxIdleConns int
-			maxIdleTime  time.Duration
-		}
+		server  serverConfig
+		db      dbConfig
 		limiter middleware.RateLimiterConfig
 	}
 
-	flag.IntVar(&cfg.port, "port", 3000, "API server port")
-	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	flag.IntVar(&cfg.server.port, "port", 3000, "API server port")
+	flag.StringVar(&cfg.server.env, "env", "development", "Environment (development|staging|production)")
+	flag.DurationVar(&cfg.server.readTimeout, "server-read-timeout", 5*time.Second, "Maximum duration for reading the entire request, including the body.")
+	flag.DurationVar(&cfg.server.writeTimeout, "server-write-timeout", 10*time.Second, "Maximum duration for writing the response, including the body.")
+	flag.DurationVar(&cfg.server.idleTimeout, "server-idle-timeout", 120*time.Second, "Maximum amount of time to wait for the next request when keep-alives are enabled.")
+	flag.DurationVar(&cfg.server.shutdownTimeout, "server-shutdown-timeout", 20*time.Second, "Maximum duration to wait for active connections to close during server shutdown.")
+	flag.BoolVar(&cfg.server.version, "version", false, "Show API version")
+
+	
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("BLUELIGHT_DB_DSN"), "PostgreSQL DSN")
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
-	flag.BoolVar(&cfg.version, "version", false, "Show API version")
+
 	flag.Float64Var(&cfg.limiter.RPS, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cfg.limiter.Burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.Enabled, "limiter-enabled", true, "Enable rate limiter")
+
 	flag.Parse()
 
-	if cfg.version {
+	if cfg.server.version {
 		fmt.Printf("API Version: %s\n", version)
 		os.Exit(0)
 	}
 
 	// POSTGRESQL
-	db, err := openDB(cfg.db.dsn, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
+	db, err := openDB(cfg.db)
 	if err != nil {
 		logger.Error("databasse connection failed", "err", err)
 		os.Exit(1)
@@ -73,38 +91,41 @@ func main() {
 	logger.Info("databasse connection pool established")
 
 	// ROUTER
-	mux := handlers.NewRouter(handlers.RouterConfig{
+	router := handlers.NewRouter(handlers.RouterConfig{
 		Logger:          logger,
-		API_Environment: cfg.env,
+		API_Environment: cfg.server.env,
 		API_Version:     version,
 		DB:              db,
 		LimiterConfig:   cfg.limiter,
 	})
 	// SERVER
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      mux,
-		ReadTimeout:  5 * time.Second,
-		IdleTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
-	}
-
-	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env)
-	err = srv.ListenAndServe()
+	err = serve(logger, router, cfg.server)
 	logger.Error(err.Error())
 	os.Exit(1)
 }
 
-func openDB(dsn string, maxOpenConns int, maxIdleConns int, maxIdleTime time.Duration) (*sql.DB, error) {
-	db, err := sql.Open("postgres", dsn)
+func serve(logger *slog.Logger, r http.Handler, cfg serverConfig) error {
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      r,
+		ReadTimeout:  cfg.readTimeout,
+		IdleTimeout:  cfg.idleTimeout,
+		WriteTimeout: cfg.writeTimeout,
+		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
+	}
+	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env)
+	return srv.ListenAndServe()
+}
+
+func openDB(cfg dbConfig) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(maxOpenConns)
-	db.SetMaxIdleConns(maxIdleConns)
-	db.SetConnMaxIdleTime(maxIdleTime)
+	db.SetMaxOpenConns(cfg.maxOpenConns)
+	db.SetMaxIdleConns(cfg.maxIdleConns)
+	db.SetConnMaxIdleTime(cfg.maxIdleTime)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
