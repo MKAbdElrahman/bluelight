@@ -22,7 +22,7 @@ func (svc *MovieService) GetMovie(id int64) (*Movie, error) {
 	return svc.movieRepository.Read(id)
 }
 
-func (svc *MovieService) GetAllMovies(filters MovieFilters) ([]*Movie, error) {
+func (svc *MovieService) GetAllMovies(filters MovieFilters) ([]*Movie,MoviesListPaginationMetadata, error) {
 	return svc.movieRepository.ReadAll(filters)
 }
 

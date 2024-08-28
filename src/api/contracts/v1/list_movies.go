@@ -95,13 +95,14 @@ func (q ListMoviesRequestQueryParams) validateRanges() map[string]string {
 }
 
 type ListMoviesResponse struct {
-	Movies []ShowMovieResponse `json:"movies"`
+	Movies             []ShowMovieResponse                 `json:"movies"`
+	MoviesListMetaData domain.MoviesListPaginationMetadata `json:"pagination_metadata"`
 }
 
-func NewListMoviesResponse(movies []*domain.Movie) ListMoviesResponse {
+func NewListMoviesResponse(movies []*domain.Movie, metadata domain.MoviesListPaginationMetadata) ListMoviesResponse {
 
-	var moviesList  ListMoviesResponse
-
+	var moviesList ListMoviesResponse
+	moviesList.MoviesListMetaData = metadata
 	for _, m := range movies {
 		moviesList.Movies = append(moviesList.Movies, ShowMovieResponse{
 			Id:               m.Id,

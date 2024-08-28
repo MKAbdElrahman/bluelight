@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"bluelight.mkcodedev.com/src/core/domain"
@@ -136,22 +135,31 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 	return nil
 }
 
-func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, error) {
+func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, domain.MoviesListPaginationMetadata, error) {
+	// Create the query builder with the necessary filters and pagination
 	builder := newSelectQueryBuilder().
 		setPagination(filters.Page, filters.PageSize).
 		setSort(filters.Sort).
 		addTitleFilter(filters.Title).
 		addGenresFilter(filters.Genres)
 
-	query, args := builder.build()
+	// Build the main query and the count query along with their respective arguments
+	query, countQuery, args, countArgs := builder.build()
 
-	fmt.Println(query)
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
 
+	// Execute the count query
+	var totalCount int
+	err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, domain.MoviesListPaginationMetadata{}, err
+	}
+
+	// Execute the main query
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, domain.MoviesListPaginationMetadata{}, err
 	}
 	defer rows.Close()
 
@@ -169,12 +177,21 @@ func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain
 			&movie.Version,
 		)
 		if err != nil {
-			return nil, err
+			return nil, domain.MoviesListPaginationMetadata{}, err
 		}
 		movies = append(movies, &movie)
 	}
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, domain.MoviesListPaginationMetadata{}, err
 	}
-	return movies, nil
+
+	// Calculate pagination metadata
+	paginationMetadata := domain.MoviesListPaginationMetadata{
+		TotalCount: totalCount,
+		TotalPages: (totalCount + builder.pageSize - 1) / builder.pageSize,
+		Page:       builder.page,
+		PageSize:   builder.pageSize,
+	}
+
+	return movies, paginationMetadata, nil
 }

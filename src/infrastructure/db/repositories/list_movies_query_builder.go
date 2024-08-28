@@ -26,15 +26,18 @@ func (b *selectQueryBuilder) setPagination(page int, pageSize int) *selectQueryB
 	b.pageSize = pageSize
 	return b
 }
-
-func (b *selectQueryBuilder) build() (string, []interface{}) {
+func (b *selectQueryBuilder) build() (string, string, []interface{}, []interface{}) {
 	query := b.baseQuery
+	countQuery := "SELECT COUNT(*) FROM movies"
 
+	// Apply conditions to both the main query and the count query
 	if len(b.conditions) > 0 {
-		query += " WHERE " + strings.Join(b.conditions, " AND ")
+		conditionClause := " WHERE " + strings.Join(b.conditions, " AND ")
+		query += conditionClause
+		countQuery += conditionClause
 	}
 
-	// Sorting
+	// Sorting (only for the main query)
 	switch b.sort {
 	case "id", "title", "year", "runtime":
 		query += " ORDER BY " + b.sort + " ASC"
@@ -44,12 +47,18 @@ func (b *selectQueryBuilder) build() (string, []interface{}) {
 		query += " ORDER BY id ASC" // Default sort by id
 	}
 
-	// Pagination
+	// Arguments for the count query (only the conditions)
+	countArgs := make([]interface{}, len(b.args))
+	copy(countArgs, b.args)
+
+	// Pagination (only for the main query)
 	if b.pageSize > 0 {
 		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", b.argIndex+1, b.argIndex+2)
 		b.args = append(b.args, b.pageSize, (b.page-1)*b.pageSize)
 	}
-	return query, b.args
+
+	// Return the main query, count query, and the arguments for each
+	return query, countQuery, b.args, countArgs
 }
 
 func (b *selectQueryBuilder) setSort(sort string) *selectQueryBuilder {

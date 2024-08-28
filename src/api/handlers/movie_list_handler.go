@@ -17,7 +17,7 @@ func newListMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 			em.SendClientError(w, r, requestErr)
 			return
 		}
-		movies, err := movieService.GetAllMovies(domain.MovieFilters{
+		movies, paginationMetadata, err := movieService.GetAllMovies(domain.MovieFilters{
 			Title:    req.QueryParams.Title,
 			Genres:   req.QueryParams.Genres,
 			Page:     req.QueryParams.Page,
@@ -33,7 +33,7 @@ func newListMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domai
 			return
 		}
 
-		res := v1.NewListMoviesResponse(movies)
+		res := v1.NewListMoviesResponse(movies, paginationMetadata)
 
 		err = jsonio.SendJSON(w, res, res.Status(), res.Headers())
 		if err != nil {
