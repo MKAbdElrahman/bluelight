@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"bluelight.mkcodedev.com/src/api/handlers"
@@ -17,7 +20,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const version = "0.0.2"
+const version = "0.0.3"
 
 type serverConfig struct {
 	port            int
@@ -60,10 +63,9 @@ func main() {
 	flag.DurationVar(&cfg.server.readTimeout, "server-read-timeout", 5*time.Second, "Maximum duration for reading the entire request, including the body.")
 	flag.DurationVar(&cfg.server.writeTimeout, "server-write-timeout", 10*time.Second, "Maximum duration for writing the response, including the body.")
 	flag.DurationVar(&cfg.server.idleTimeout, "server-idle-timeout", 120*time.Second, "Maximum amount of time to wait for the next request when keep-alives are enabled.")
-	flag.DurationVar(&cfg.server.shutdownTimeout, "server-shutdown-timeout", 20*time.Second, "Maximum duration to wait for active connections to close during server shutdown.")
+	flag.DurationVar(&cfg.server.shutdownTimeout, "server-shutdown-timeout", 30*time.Second, "Maximum duration to wait for active connections to close during server shutdown.")
 	flag.BoolVar(&cfg.server.version, "version", false, "Show API version")
 
-	
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("BLUELIGHT_DB_DSN"), "PostgreSQL DSN")
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
@@ -98,10 +100,14 @@ func main() {
 		DB:              db,
 		LimiterConfig:   cfg.limiter,
 	})
+
 	// SERVER
 	err = serve(logger, router, cfg.server)
-	logger.Error(err.Error())
-	os.Exit(1)
+	if err != nil {
+		logger.Error("server failed to gracefully shutdown", "error", err.Error())
+		os.Exit(1)
+	}
+
 }
 
 func serve(logger *slog.Logger, r http.Handler, cfg serverConfig) error {
@@ -113,8 +119,34 @@ func serve(logger *slog.Logger, r http.Handler, cfg serverConfig) error {
 		WriteTimeout: cfg.writeTimeout,
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
+	shutdownError := make(chan error)
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		s := <-quit
+		logger.Info("shutting down server", "signal", s.String())
+
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.shutdownTimeout)
+		defer cancel()
+
+		shutdownError <- srv.Shutdown(ctx)
+	}()
+
 	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env)
-	return srv.ListenAndServe()
+	err := srv.ListenAndServe()
+
+	if !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	err = <-shutdownError
+	if err != nil {
+		return err
+	}
+
+	logger.Info("stopped server", "addr", srv.Addr)
+
+	return nil
 }
 
 func openDB(cfg dbConfig) (*sql.DB, error) {
@@ -135,6 +167,5 @@ func openDB(cfg dbConfig) (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
-
 	return db, nil
 }
