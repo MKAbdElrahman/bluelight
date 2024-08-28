@@ -135,10 +135,11 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 	return nil
 }
 
-func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, error) {
+func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, error) {	
 	builder := newSelectQueryBuilder().
 		setPagination(filters.Page, filters.PageSize).
-		SetSort(filters.Sort)
+		setSort(filters.Sort).
+		addTitleFilter(filters.Title)
 
 	query, args := builder.build()
 
