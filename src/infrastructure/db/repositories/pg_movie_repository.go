@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"bluelight.mkcodedev.com/src/core/domain"
@@ -135,14 +136,16 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 	return nil
 }
 
-func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, error) {	
+func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, error) {
 	builder := newSelectQueryBuilder().
 		setPagination(filters.Page, filters.PageSize).
 		setSort(filters.Sort).
-		addTitleFilter(filters.Title)
+		addTitleFilter(filters.Title).
+		addGenresFilter(filters.Genres)
 
 	query, args := builder.build()
 
+	fmt.Println(query)
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
 

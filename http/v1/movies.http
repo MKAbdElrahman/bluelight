@@ -2,10 +2,10 @@
 POST    http://localhost:3000/v1/movies
 
  {
-  "title": "The Shawshank Redemption",
+  "title": "Roab",
   "year": 1900,
   "runtime": 142,
-  "genres": ["Drama", "Prison"]
+  "genres": ["Horror" ]
 }
 
 ###
@@ -28,4 +28,4 @@ DELETE  http://localhost:3000/v1/movies/10
 
 
 ###
-GET http://localhost:3000/v1/movies?title=cost&page=1&page_size=2&sort=-year
+GET http://localhost:3000/v1/movies?page=1&page_size=2&sort=-year&genres=horror

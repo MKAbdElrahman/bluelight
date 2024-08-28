@@ -65,3 +65,16 @@ func (b *selectQueryBuilder) addTitleFilter(title string) *selectQueryBuilder {
 	}
 	return b
 }
+
+func (b *selectQueryBuilder) addGenresFilter(genres []string) *selectQueryBuilder {
+	if len(genres) > 0 {
+		genrePlaceholders := make([]string, len(genres))
+		for i := range genres {
+			genrePlaceholders[i] = fmt.Sprintf("$%d", b.argIndex+1)
+			b.args = append(b.args, strings.ToLower(genres[i]))
+			b.argIndex++
+		}
+		b.conditions = append(b.conditions, fmt.Sprintf("EXISTS (SELECT 1 FROM unnest(genres) AS genre WHERE LOWER(genre) = ANY (ARRAY[%s]))", strings.Join(genrePlaceholders, ", ")))
+	}
+	return b
+}
