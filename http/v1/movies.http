@@ -28,4 +28,4 @@ DELETE  http://localhost:3000/v1/movies/10
 
 
 ###
-GET http://localhost:3000/v1/movies?title=godfather&genres=crime,drama&page=1&page_size=5&sort=-id
+GET http://localhost:3000/v1/movies?title=godfather&genres=crime,drama&page=2&page_size=1&sort=-id

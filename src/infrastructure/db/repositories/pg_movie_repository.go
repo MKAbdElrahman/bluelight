@@ -136,15 +136,15 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 }
 
 func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, error) {
-	query := `
-SELECT id, created_at, title, year, runtime, genres, version
-FROM movies
-ORDER BY id`
+	builder := newSelectQueryBuilder().
+		setPagination(filters.Page, filters.PageSize)
+
+	query, args := builder.build()
 
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
