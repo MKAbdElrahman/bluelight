@@ -1,4 +1,4 @@
-package handlers
+package router
 
 import (
 	"database/sql"
@@ -8,6 +8,9 @@ import (
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
+	healthCheckHandlers "bluelight.mkcodedev.com/src/api/handlers/healthcheck"
+	movieHandlers "bluelight.mkcodedev.com/src/api/handlers/movie"
+
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/infrastructure/db/repositories"
@@ -54,12 +57,12 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	movieService := movie.NewMovieService(movieRepository)
 
 	// ROUTES
-	r.Get("/v1/healthcheck", newHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
-	r.Post("/v1/movies", newCreateMovieHandlerFunc(em, movieService))
-	r.Patch("/v1/movies/{id}", newUpdateMovieHandlerFunc(em, movieService))
-	r.Get("/v1/movies/{id}", newShowMovieHandlerFunc(em, movieService))
-	r.Get("/v1/movies", newListMovieHandlerFunc(em, movieService))
-	r.Delete("/v1/movies/{id}", newDeleteMovieHandlerFunc(em, movieService))
+	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
+	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
+	r.Patch("/v1/movies/{id}", movieHandlers.NewUpdateMovieHandlerFunc(em, movieService))
+	r.Get("/v1/movies/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
+	r.Get("/v1/movies", movieHandlers.NewListMovieHandlerFunc(em, movieService))
+	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
 
 	return r
 }

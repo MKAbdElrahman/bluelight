@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"bluelight.mkcodedev.com/src/api/handlers"
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
+	"bluelight.mkcodedev.com/src/api/router"
 	"github.com/charmbracelet/log"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -93,7 +93,7 @@ func main() {
 	logger.Info("databasse connection pool established")
 
 	// ROUTER
-	router := handlers.NewRouter(handlers.RouterConfig{
+	router := router.NewRouter(router.RouterConfig{
 		Logger:          logger,
 		API_Environment: cfg.server.env,
 		API_Version:     version,

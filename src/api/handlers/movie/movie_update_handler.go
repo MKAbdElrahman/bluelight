@@ -1,4 +1,4 @@
-package handlers
+package moviehandlers
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 )
 
-func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
+func NewUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
 		req, requestErr := v1.NewUpdateMovieRequest(r)

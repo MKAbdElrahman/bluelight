@@ -1,4 +1,4 @@
-package handlers
+package healthcheckhandlers
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 )
 
-func newHealthCheckHandlerFunc(em *errorhandler.ErrorHandeler, env, version string) http.HandlerFunc {
+func NewHealthCheckHandlerFunc(em *errorhandler.ErrorHandeler, env, version string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		health := struct {

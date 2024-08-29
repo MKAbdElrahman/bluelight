@@ -1,4 +1,4 @@
-package handlers
+package moviehandlers
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 )
 
-func newDeleteMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
+func NewDeleteMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
 		req, requestErr := v1.NewDeleteMovieRequest(r)

@@ -7,7 +7,7 @@ env:
 tasks:
   ## API
 
-  run: go run ./src/api {{.CLI_ARGS}}
+  run: go run ./src/api/cmd {{.CLI_ARGS}}
   psql: psql  $POSTGRESQL_URL
 
   ## DATABASE MIGRATIONS
