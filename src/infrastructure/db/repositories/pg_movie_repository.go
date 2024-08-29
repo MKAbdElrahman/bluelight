@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"github.com/lib/pq"
 )
@@ -41,7 +40,7 @@ RETURNING id, created_at, version`
 func (r *postgresMovieRepositry) Read(id int64) (*movie.Movie, error) {
 
 	if id < 1 {
-		return nil, domain.ErrRecordNotFound
+		return nil, movie.ErrRecordNotFound
 	}
 
 	query := `
@@ -49,30 +48,30 @@ func (r *postgresMovieRepositry) Read(id int64) (*movie.Movie, error) {
 	FROM movies
 	WHERE id = $1`
 
-	var movie movie.Movie
+	var m movie.Movie
 
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&movie.Id,
-		&movie.CreatedAt,
-		&movie.Title,
-		&movie.Year,
-		&movie.RuntimeInMinutes,
-		pq.Array(&movie.Genres),
-		&movie.Version,
+		&m.Id,
+		&m.CreatedAt,
+		&m.Title,
+		&m.Year,
+		&m.RuntimeInMinutes,
+		pq.Array(&m.Genres),
+		&m.Version,
 	)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return nil, domain.ErrRecordNotFound
+			return nil, movie.ErrRecordNotFound
 		default:
 			return nil, err
 		}
 	}
 
-	return &movie, nil
+	return &m, nil
 }
 
 func (r *postgresMovieRepositry) Update(m *movie.Movie) error {
@@ -98,7 +97,7 @@ RETURNING version`
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return domain.ErrEditConflict
+			return movie.ErrEditConflict
 		default:
 			return err
 		}
@@ -111,7 +110,7 @@ RETURNING version`
 func (r *postgresMovieRepositry) Delete(id int64) error {
 
 	if id < 1 {
-		return domain.ErrRecordNotFound
+		return movie.ErrRecordNotFound
 	}
 	query := `
 	DELETE FROM movies
@@ -131,7 +130,7 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return domain.ErrRecordNotFound
+		return movie.ErrRecordNotFound
 	}
 	return nil
 }

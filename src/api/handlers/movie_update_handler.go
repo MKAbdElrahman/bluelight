@@ -6,7 +6,6 @@ import (
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	errorhandler "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
-	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
@@ -25,7 +24,7 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 		m, domainErr := movieService.GetMovie(req.IdPathParam)
 		if domainErr != nil {
 			switch {
-			case errors.Is(domainErr, domain.ErrRecordNotFound):
+			case errors.Is(domainErr, movie.ErrRecordNotFound):
 				em.SendClientError(w, r, v1.NotFoundError)
 			default:
 				em.SendServerError(w, r, v1.ServerError{
@@ -53,7 +52,7 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 
 		if domainErr != nil {
 			switch {
-			case errors.Is(domainErr, domain.ErrEditConflict):
+			case errors.Is(domainErr, movie.ErrEditConflict):
 				em.SendClientError(w, r, v1.ConflictError)
 			default:
 				em.SendServerError(w, r, v1.ServerError{

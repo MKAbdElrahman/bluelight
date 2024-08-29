@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"bluelight.mkcodedev.com/src/core/domain"
 	"bluelight.mkcodedev.com/src/core/domain/user"
 	"github.com/lib/pq"
 )
@@ -39,7 +38,7 @@ RETURNING id, created_at, version`
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
-			return domain.ErrDuplicateEmail
+			return user.ErrDuplicateEmail
 		default:
 			return err
 		}
@@ -72,7 +71,7 @@ func (r *postgresUserRepositry) GetByEmail(email string) (*user.User, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return nil, domain.ErrRecordNotFound
+			return nil, user.ErrRecordNotFound
 		default:
 			return nil, err
 		}
@@ -80,29 +79,29 @@ func (r *postgresUserRepositry) GetByEmail(email string) (*user.User, error) {
 	return &u, nil
 }
 
-func (r *postgresUserRepositry) Update(user *user.User) error {
+func (r *postgresUserRepositry) Update(u *user.User) error {
 	query := `
 	UPDATE users
 	SET name = $1, email = $2, password_hash = $3, activated = $4, version = version + 1
 	WHERE id = $5 AND version = $6
 	RETURNING version`
 	args := []any{
-		user.Name,
-		user.Email,
-		user.PasswordHash,
-		user.Activated,
-		user.Id,
-		user.Version,
+		u.Name,
+		u.Email,
+		u.PasswordHash,
+		u.Activated,
+		u.Id,
+		u.Version,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&user.Version)
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&u.Version)
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
-			return domain.ErrDuplicateEmail
+			return user.ErrDuplicateEmail
 		case errors.Is(err, sql.ErrNoRows):
-			return domain.ErrEditConflict
+			return user.ErrEditConflict
 		default:
 			return err
 		}
