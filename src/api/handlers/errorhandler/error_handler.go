@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
-	"bluelight.mkcodedev.com/src/lib/jsonio"
+	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 )
 
 // ErrorManager handles error logging and responses.

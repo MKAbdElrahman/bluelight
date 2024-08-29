@@ -6,8 +6,8 @@ import (
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/api/contracts/webutil"
+	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
-	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
 // UpdateMovieRequest represents the request structure for updating a movie.

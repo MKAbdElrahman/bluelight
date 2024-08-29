@@ -5,7 +5,7 @@ import (
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	errorhandler "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
-	"bluelight.mkcodedev.com/src/lib/jsonio"
+	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 )
 
 func newHealthCheckHandlerFunc(em *errorhandler.ErrorHandeler, env, version string) http.HandlerFunc {
