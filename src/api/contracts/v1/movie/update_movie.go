@@ -7,7 +7,6 @@ import (
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/api/contracts/webutil"
 	"bluelight.mkcodedev.com/src/api/lib/jsonio"
-	"bluelight.mkcodedev.com/src/core/domain/movie"
 )
 
 // UpdateMovieRequest represents the request structure for updating a movie.
@@ -40,31 +39,6 @@ func NewUpdateMovieRequest(r *http.Request) (UpdateMovieRequest, *apierror.Clien
 	req := UpdateMovieRequest{
 		Body:        body,
 		IdPathParam: parsedId,
-	}
-
-	m := &movie.Movie{}
-	validator := movie.NewMovieValidator(m)
-
-	if req.Body.Title != nil {
-		m.Title = *req.Body.Title
-		validator.ValidateTitle()
-	}
-	if req.Body.Year != nil {
-		m.Year = *req.Body.Year
-		validator.ValidateYear()
-	}
-	if req.Body.Runtime != nil {
-		m.RuntimeInMinutes = *req.Body.Runtime
-		validator.ValidateRuntimeInMinutes()
-	}
-	if req.Body.Genres != nil {
-		m.Genres = req.Body.Genres
-	}
-
-	if err := validator.Errors(); err != nil {
-		return UpdateMovieRequest{}, apierror.UnprocessableEntityError.WithDetails(map[string]string{
-			"validation_error": err.Error(),
-		})
 	}
 
 	return req, nil

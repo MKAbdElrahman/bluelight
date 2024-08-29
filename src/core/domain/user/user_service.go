@@ -10,8 +10,24 @@ func NewUserService(r UserRepositoty) *UserService {
 	}
 }
 
-func (svc *UserService) CreateUser(u *User) error {
-	return svc.userRepository.Create(u)
+type UserRegisterationParams struct {
+	Name     string
+	Email    string
+	Password string
+}
+
+func (svc *UserService) RegisterUser(params UserRegisterationParams) (*User, error) {
+	u, err := NewUser(params.Name, params.Email, params.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	err = svc.userRepository.Create(u)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (svc *UserService) UpdateUser(u *User) error {

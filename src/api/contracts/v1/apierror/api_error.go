@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
 // Default ServerError values
@@ -122,6 +124,20 @@ func (e *ClientError) WithDetails(details map[string]string) *ClientError {
 		for key, value := range details {
 			e.UserFacingDetails[key] = value
 		}
+	}
+	return e
+}
+
+func (e *ClientError) WithValidationError(err *verrors.ValidationError) *ClientError {
+	e.UserFacingDetails = map[string]string{
+		err.Field: err.Message,
+	}
+	return e
+}
+
+func (e *ClientError) WithError(key string, err error) *ClientError {
+	e.UserFacingDetails = map[string]string{
+		key: err.Error(),
 	}
 	return e
 }

@@ -10,9 +10,11 @@ import (
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	healthCheckHandlers "bluelight.mkcodedev.com/src/api/handlers/healthcheck"
 	movieHandlers "bluelight.mkcodedev.com/src/api/handlers/movie"
+	userHandlers "bluelight.mkcodedev.com/src/api/handlers/user"
 
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
+	"bluelight.mkcodedev.com/src/core/domain/user"
 	"bluelight.mkcodedev.com/src/infrastructure/db/repositories"
 	"github.com/go-chi/chi/v5"
 )
@@ -56,6 +58,12 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		})
 	movieService := movie.NewMovieService(movieRepository)
 
+	userRepository := repositories.NewPostgresUserRepository(
+		cfg.DB,
+		repositories.PostgresUserRepositryConfig{
+			Timeout: 3 * time.Second,
+		})
+	userService := user.NewUserService(userRepository)
 	// ROUTES
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
@@ -63,6 +71,8 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Get("/v1/movies/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
 	r.Get("/v1/movies", movieHandlers.NewListMovieHandlerFunc(em, movieService))
 	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
+
+	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(em, userService))
 
 	return r
 }

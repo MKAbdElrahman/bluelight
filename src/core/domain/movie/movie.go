@@ -1,8 +1,9 @@
 package movie
 
 import (
-	"errors"
 	"time"
+
+	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
 type Movie struct {
@@ -15,67 +16,59 @@ type Movie struct {
 	Version          int32
 }
 
-// MovieValidator provides a fluent interface for validating Movie fields.
-type MovieValidator struct {
-	movie *Movie
-	errs  []error
-}
-
-// NewMovieValidator creates a new MovieValidator for the given Movie.
-func NewMovieValidator(movie *Movie) *MovieValidator {
-	return &MovieValidator{movie: movie, errs: make([]error, 0)}
-}
-
-// ValidateTitle checks if the Title field is valid.
-func (v *MovieValidator) ValidateTitle() *MovieValidator {
-	if v.movie.Title == "" {
-		v.errs = append(v.errs, errors.New("title is required"))
-	} else if len(v.movie.Title) > 500 {
-		v.errs = append(v.errs, errors.New("title must not be more than 500 bytes long"))
+func NewMovie(title string, year int32, runtime int32, genres []string) (*Movie, error) {
+	if title == "" {
+		return nil, verrors.NewValidationError("title", "title is empty")
 	}
-	return v
-}
-
-// ValidateYear checks if the Year field is valid.
-func (v *MovieValidator) ValidateYear() *MovieValidator {
-	if v.movie.Year == 0 {
-		v.errs = append(v.errs, errors.New("year is required"))
-	} else if v.movie.Year <= 1888 {
-		v.errs = append(v.errs, errors.New("year must be greater than 1888"))
-	} else if v.movie.Year > int32(time.Now().Year()) {
-		v.errs = append(v.errs, errors.New("year must not be in the future"))
-	}
-	return v
-}
-
-// ValidateRuntimeInMinutes checks if the RuntimeInMinutes field is valid.
-func (v *MovieValidator) ValidateRuntimeInMinutes() *MovieValidator {
-	if v.movie.RuntimeInMinutes == 0 {
-		v.errs = append(v.errs, errors.New("runtime is required"))
-	} else if v.movie.RuntimeInMinutes < 0 {
-		v.errs = append(v.errs, errors.New("runtime must be a positive integer"))
-	}
-	return v
-}
-
-// ValidateAll validates all fields of the Movie.
-func (v *MovieValidator) ValidateAll() *MovieValidator {
-	return v.ValidateTitle().ValidateYear().ValidateRuntimeInMinutes()
-}
-
-// Errors returns all the validation errors encountered.
-func (v *MovieValidator) Errors() error {
-	if len(v.errs) == 0 {
-		return nil
+	if len(title) > 500 {
+		return nil, verrors.NewValidationError(title, "title must not be more than 500 bytes long")
 	}
 
-	// Combine all errors into one error message
-	errorMsg := "validation errors: "
-	for i, err := range v.errs {
-		if i > 0 {
-			errorMsg += "; "
-		}
-		errorMsg += err.Error()
+	if year == 0 {
+		return nil, verrors.NewValidationError("year", "year is 0")
 	}
-	return errors.New(errorMsg)
+	if year <= 1888 {
+		return nil, verrors.NewValidationError("year", "year must be greater than 1888")
+	}
+	if year > int32(time.Now().Year()) {
+		return nil, verrors.NewValidationError("year", "year must not be in the future")
+	}
+
+	if runtime == 0 {
+		return nil, verrors.NewValidationError("runtime", "runtime is required")
+	}
+
+	if runtime < 0 {
+		return nil, verrors.NewValidationError("runtime", "runtime must be a positive integer")
+	}
+
+	if genres == nil {
+		return nil, verrors.NewValidationError("genres", "genres is required")
+	}
+	if len(genres) == 0 {
+		return nil, verrors.NewValidationError("genres", "must contain at least 1 genre")
+	}
+	if len(genres) > 5 {
+		return nil, verrors.NewValidationError("genres", "must not contain more than 5 genres")
+	}
+
+	if !unique(genres) {
+		return nil, verrors.NewValidationError("genres", "must not contain duplicate values")
+	}
+
+	return &Movie{
+		Title:            title,
+		Year:             year,
+		RuntimeInMinutes: runtime,
+		Genres:           genres,
+	}, nil
+
+}
+
+func unique[T comparable](values []T) bool {
+	uniqueValues := make(map[T]bool)
+	for _, value := range values {
+		uniqueValues[value] = true
+	}
+	return len(values) == len(uniqueValues)
 }

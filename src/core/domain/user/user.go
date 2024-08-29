@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"regexp"
+
+	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
 var (
@@ -21,31 +23,43 @@ type User struct {
 	Version      int
 }
 
-type UserValidator struct {
-	user *User
-	errs []error
+func NewUser(name, email, password string) (*User, error) {
+	if name == "" {
+		return nil, &verrors.ValidationError{Field: "Name", Message: "cannot be empty"}
+	}
+	if len(name) > 500 {
+		return nil, &verrors.ValidationError{Field: "Name", Message: "must not be more than 500 bytes long"}
+	}
+
+	if !emailRX.MatchString(email) {
+		return nil, &verrors.ValidationError{Field: "Email", Message: "must be a valid email address"}
+	}
+
+	if err := validatePlainTextPassword(password); err != nil {
+		return nil, &verrors.ValidationError{Field: "Password", Message: err.Error()}
+	}
+
+	passwordHash, err := newPasswordHash(password)
+	if err != nil {
+		return nil, err 
+	}
+
+	return &User{
+		Name:         name,
+		Email:        email,
+		PasswordHash: passwordHash,
+	}, nil
 }
 
-func NewUserValidator(user *User) *UserValidator {
-	return &UserValidator{user: user, errs: make([]error, 0)}
-}
-
-func (v *UserValidator) ValidateEmail() *UserValidator {
-	if v.user.Email == "" {
-		v.errs = append(v.errs, errors.New("email is required"))
+func validatePlainTextPassword(p string) error {
+	if p == "" {
+		return errors.New("password is required")
 	}
-	if !emailRX.MatchString(v.user.Email) {
-		v.errs = append(v.errs, errors.New("email must be a valid email address"))
+	if len(p) < 8 {
+		return errors.New("password must be at least 8 bytes long")
 	}
-	return v
-}
-
-func (v *UserValidator) ValidateName() *UserValidator {
-	if v.user.Name == "" {
-		v.errs = append(v.errs, errors.New("name is required"))
+	if len(p) > 72 {
+		return errors.New("password must not be more than 72 bytes long")
 	}
-	if len(v.user.Name) > 500 {
-		v.errs = append(v.errs, errors.New("name must not be more than 500 bytes long"))
-	}
-	return v
+	return nil
 }

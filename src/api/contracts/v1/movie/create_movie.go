@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
-	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 )
 
@@ -34,19 +33,6 @@ func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *apierror.Clien
 		Body: body,
 	}
 
-	m := &movie.Movie{
-		Title:            req.Body.Title,
-		Year:             req.Body.Year,
-		Genres:           req.Body.Genres,
-		RuntimeInMinutes: req.Body.Runtime,
-	}
-
-	err = movie.NewMovieValidator(m).ValidateAll().Errors()
-	if err != nil {
-		return CreateMovieRequest{}, apierror.UnprocessableEntityError.WithDetails(map[string]string{
-			"validation_error": err.Error(),
-		})
-	}
 	return req, nil
 }
 

@@ -1,6 +1,7 @@
 package moviehandlers
 
 import (
+	"errors"
 	"net/http"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
@@ -8,6 +9,7 @@ import (
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
+	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
 func NewCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
@@ -20,16 +22,24 @@ func NewCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 		}
 
 		// Business
-		m := &movie.Movie{
+		params := movie.MovieCreateParams{
 			Title:            req.Body.Title,
 			Year:             req.Body.Year,
 			Genres:           req.Body.Genres,
 			RuntimeInMinutes: req.Body.Runtime,
 		}
 
-		err := movieService.CreateMovie(m)
+		m, err := movieService.CreateMovie(params)
 		if err != nil {
-			em.SendServerError(w, r, apierror.NewInternalServerError(err))
+
+			var validErr *verrors.ValidationError
+			switch {
+			case errors.As(err, &validErr):
+				em.SendClientError(w, r, apierror.UnprocessableEntityError.WithValidationError(validErr))
+			default:
+				em.SendServerError(w, r, apierror.NewInternalServerError(err))
+
+			}
 			return
 		}
 

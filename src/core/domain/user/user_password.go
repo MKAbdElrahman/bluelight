@@ -21,18 +21,6 @@ func newPasswordHash(plaintextPassword string) (passwordHash, error) {
 	return hash, nil
 }
 
-func validatePlainTextPassword(p string) error {
-	if p == "" {
-		return errors.New("password is required")
-	}
-	if len(p) < 8 {
-		return errors.New("password must be at least 8 bytes long")
-	}
-	if len(p) > 72 {
-		return errors.New("password must not be more than 72 bytes long")
-	}
-	return nil
-}
 
 func (p passwordHash) isHashedFrom(plaintextPassword string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword(p, []byte(plaintextPassword))
