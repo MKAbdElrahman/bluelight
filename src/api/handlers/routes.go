@@ -9,7 +9,7 @@ import (
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
-	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/infrastructure/db/repositories"
 	"github.com/go-chi/chi/v5"
 )
@@ -30,7 +30,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	em.LogServerErrors = true
 
 	// MIDDLEWARE
-	r.Use(middleware.RateLimiter(em,cfg.LimiterConfig))
+	r.Use(middleware.RateLimiter(em, cfg.LimiterConfig))
 	r.Use(middleware.RequestSizeLimiter(1_048_576)) // 1MB
 	r.Use(middleware.RequestLogger(cfg.Logger))
 	r.Use(middleware.PanicRecoverer(em))
@@ -51,7 +51,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		repositories.PostgresMovieRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	movieService := domain.NewMovieService(movieRepository)
+	movieService := movie.NewMovieService(movieRepository)
 
 	// ROUTES
 	r.Get("/v1/healthcheck", newHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))

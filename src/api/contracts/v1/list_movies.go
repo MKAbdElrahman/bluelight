@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"slices"
 
-	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/core/domain/movie"
 )
 
 type ListMoviesRequest struct {
@@ -95,11 +95,11 @@ func (q ListMoviesRequestQueryParams) validateRanges() map[string]string {
 }
 
 type ListMoviesResponse struct {
-	Movies             []ShowMovieResponse                 `json:"movies"`
-	MoviesListMetaData domain.MoviesListPaginationMetadata `json:"pagination_metadata"`
+	Movies             []ShowMovieResponse                `json:"movies"`
+	MoviesListMetaData movie.MoviesListPaginationMetadata `json:"pagination_metadata"`
 }
 
-func NewListMoviesResponse(movies []*domain.Movie, metadata domain.MoviesListPaginationMetadata) ListMoviesResponse {
+func NewListMoviesResponse(movies []*movie.Movie, metadata movie.MoviesListPaginationMetadata) ListMoviesResponse {
 
 	var moviesList ListMoviesResponse
 	moviesList.MoviesListMetaData = metadata

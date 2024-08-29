@@ -1,4 +1,4 @@
-package domain
+package movie
 
 type MovieFilters struct {
 	Title    string

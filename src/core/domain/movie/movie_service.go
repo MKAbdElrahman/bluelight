@@ -1,4 +1,4 @@
-package domain
+package movie
 
 type MovieService struct {
 	movieRepository MovieRepositoty

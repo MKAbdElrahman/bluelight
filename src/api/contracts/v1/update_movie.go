@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
@@ -40,8 +40,8 @@ func NewUpdateMovieRequest(r *http.Request) (UpdateMovieRequest, *ClientError) {
 		IdPathParam: parsedId,
 	}
 
-	m := &domain.Movie{}
-	validator := domain.NewMovieValidator(m)
+	m := &movie.Movie{}
+	validator := movie.NewMovieValidator(m)
 
 	if req.Body.Title != nil {
 		m.Title = *req.Body.Title

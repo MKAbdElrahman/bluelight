@@ -7,10 +7,11 @@ import (
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	errorhandler "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
+func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
 		req, requestErr := v1.NewUpdateMovieRequest(r)

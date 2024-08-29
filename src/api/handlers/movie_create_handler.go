@@ -5,11 +5,11 @@ import (
 
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
-	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
-func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *domain.MovieService) http.HandlerFunc {
+func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
 		req, requestErr := v1.NewCreateMovieRequest(r)
@@ -19,7 +19,7 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *dom
 		}
 
 		// Business
-		m := &domain.Movie{
+		m := &movie.Movie{
 			Title:            req.Body.Title,
 			Year:             req.Body.Year,
 			Genres:           req.Body.Genres,

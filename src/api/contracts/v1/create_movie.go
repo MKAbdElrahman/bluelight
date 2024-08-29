@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
@@ -33,14 +33,14 @@ func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *ClientError) {
 		Body: body,
 	}
 
-	movie := &domain.Movie{
+	m := &movie.Movie{
 		Title:            req.Body.Title,
 		Year:             req.Body.Year,
 		Genres:           req.Body.Genres,
 		RuntimeInMinutes: req.Body.Runtime,
 	}
 
-	err = domain.NewMovieValidator(movie).ValidateAll().Errors()
+	err = movie.NewMovieValidator(m).ValidateAll().Errors()
 	if err != nil {
 		return CreateMovieRequest{}, UnprocessableEntityError.WithDetails(map[string]string{
 			"validation_error": err.Error(),
@@ -70,4 +70,3 @@ func (r CreateMovieResponse) Headers() http.Header {
 	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", r.Id))
 	return headers
 }
-

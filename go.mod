@@ -7,6 +7,7 @@ require (
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	golang.org/x/crypto v0.26.0
 	golang.org/x/time v0.6.0
 )
 
@@ -21,5 +22,5 @@ require (
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
 )

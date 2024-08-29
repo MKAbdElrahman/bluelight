@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"bluelight.mkcodedev.com/src/core/domain"
+	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"github.com/lib/pq"
 )
 
@@ -26,7 +27,7 @@ func NewPostgresMovieRepository(db *sql.DB, config PostgresMovieRepositryConfig)
 	}
 }
 
-func (r *postgresMovieRepositry) Create(m *domain.Movie) error {
+func (r *postgresMovieRepositry) Create(m *movie.Movie) error {
 	query := `
 INSERT INTO movies (title, year, runtime, genres)
 VALUES ($1, $2, $3, $4)
@@ -37,7 +38,7 @@ RETURNING id, created_at, version`
 	return r.db.QueryRowContext(ctx, query, args...).Scan(&m.Id, &m.CreatedAt, &m.Version)
 }
 
-func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
+func (r *postgresMovieRepositry) Read(id int64) (*movie.Movie, error) {
 
 	if id < 1 {
 		return nil, domain.ErrRecordNotFound
@@ -48,7 +49,7 @@ func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
 	FROM movies
 	WHERE id = $1`
 
-	var movie domain.Movie
+	var movie movie.Movie
 
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
@@ -74,7 +75,7 @@ func (r *postgresMovieRepositry) Read(id int64) (*domain.Movie, error) {
 	return &movie, nil
 }
 
-func (r *postgresMovieRepositry) Update(m *domain.Movie) error {
+func (r *postgresMovieRepositry) Update(m *movie.Movie) error {
 	query := `
 UPDATE movies
 SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
@@ -135,7 +136,7 @@ func (r *postgresMovieRepositry) Delete(id int64) error {
 	return nil
 }
 
-func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain.Movie, domain.MoviesListPaginationMetadata, error) {
+func (r *postgresMovieRepositry) ReadAll(filters movie.MovieFilters) ([]*movie.Movie, movie.MoviesListPaginationMetadata, error) {
 	// Create the query builder with the necessary filters and pagination
 	builder := newSelectQueryBuilder().
 		setPagination(filters.Page, filters.PageSize).
@@ -153,40 +154,40 @@ func (r *postgresMovieRepositry) ReadAll(filters domain.MovieFilters) ([]*domain
 	var totalCount int
 	err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
 	if err != nil {
-		return nil, domain.MoviesListPaginationMetadata{}, err
+		return nil, movie.MoviesListPaginationMetadata{}, err
 	}
 
 	// Execute the main query
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, domain.MoviesListPaginationMetadata{}, err
+		return nil, movie.MoviesListPaginationMetadata{}, err
 	}
 	defer rows.Close()
 
-	movies := []*domain.Movie{}
+	movies := []*movie.Movie{}
 
 	for rows.Next() {
-		var movie domain.Movie
+		var m movie.Movie
 		err := rows.Scan(
-			&movie.Id,
-			&movie.CreatedAt,
-			&movie.Title,
-			&movie.Year,
-			&movie.RuntimeInMinutes,
-			pq.Array(&movie.Genres),
-			&movie.Version,
+			&m.Id,
+			&m.CreatedAt,
+			&m.Title,
+			&m.Year,
+			&m.RuntimeInMinutes,
+			pq.Array(&m.Genres),
+			&m.Version,
 		)
 		if err != nil {
-			return nil, domain.MoviesListPaginationMetadata{}, err
+			return nil, movie.MoviesListPaginationMetadata{}, err
 		}
-		movies = append(movies, &movie)
+		movies = append(movies, &m)
 	}
 	if err = rows.Err(); err != nil {
-		return nil, domain.MoviesListPaginationMetadata{}, err
+		return nil, movie.MoviesListPaginationMetadata{}, err
 	}
 
 	// Calculate pagination metadata
-	paginationMetadata := domain.MoviesListPaginationMetadata{
+	paginationMetadata := movie.MoviesListPaginationMetadata{
 		TotalCount: totalCount,
 		TotalPages: (totalCount + builder.pageSize - 1) / builder.pageSize,
 		Page:       builder.page,
