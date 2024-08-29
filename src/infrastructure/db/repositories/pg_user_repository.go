@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"bluelight.mkcodedev.com/src/core/domain/user"
-	"github.com/lib/pq"
 )
 
 type PostgresUserRepositryConfig struct {
@@ -28,10 +27,12 @@ func NewPostgresUserRepository(db *sql.DB, config PostgresUserRepositryConfig) *
 
 func (r *postgresUserRepositry) Create(u *user.User) error {
 	query := `
-INSERT INTO users (name, email, password_hash, activated)
-VALUES ($1, $2, $3, $4)
-RETURNING id, created_at, version`
-	args := []any{u.Name, u.Email, u.PasswordHash, pq.Array(u.Activated)}
+	INSERT INTO users (name, email, password_hash, activated)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, created_at, version`
+
+	args := []any{u.Name, u.Email, u.PasswordHash, u.Activated}
+
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(&u.Id, &u.CreatedAt, &u.Version)
@@ -108,6 +109,3 @@ func (r *postgresUserRepositry) Update(u *user.User) error {
 	}
 	return nil
 }
-
-
-
