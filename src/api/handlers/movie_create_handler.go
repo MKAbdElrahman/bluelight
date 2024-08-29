@@ -3,7 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
+	v1 "bluelight.mkcodedev.com/src/api/contracts/v1/movie"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
@@ -28,10 +29,7 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 
 		err := movieService.CreateMovie(m)
 		if err != nil {
-			em.SendServerError(w, r, v1.ServerError{
-				Code:            http.StatusInternalServerError,
-				InternalMessage: err.Error(),
-			})
+			em.SendServerError(w, r, apierror.NewInternalServerError(err))
 			return
 		}
 
@@ -46,10 +44,8 @@ func newCreateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 
 		err = jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
-			em.SendServerError(w, r, v1.ServerError{
-				Code:            http.StatusInternalServerError,
-				InternalMessage: err.Error(),
-			})
+			em.SendServerError(w, r, apierror.NewInternalServerError(err))
+
 			return
 		}
 	}

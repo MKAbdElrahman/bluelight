@@ -1,9 +1,10 @@
-package v1
+package v1movie
 
 import (
 	"fmt"
 	"net/http"
 
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
@@ -20,13 +21,13 @@ type CreateMovieRequestBody struct {
 	Genres  []string `json:"genres"`
 }
 
-func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *ClientError) {
+func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *apierror.ClientError) {
 
 	var body CreateMovieRequestBody
 
 	err := jsonio.NewJSONReader().ReadJSON(r, &body)
 	if err != nil {
-		return CreateMovieRequest{}, BadRequestError
+		return CreateMovieRequest{}, apierror.BadRequestError
 	}
 
 	req := CreateMovieRequest{
@@ -42,7 +43,7 @@ func NewCreateMovieRequest(r *http.Request) (CreateMovieRequest, *ClientError) {
 
 	err = movie.NewMovieValidator(m).ValidateAll().Errors()
 	if err != nil {
-		return CreateMovieRequest{}, UnprocessableEntityError.WithDetails(map[string]string{
+		return CreateMovieRequest{}, apierror.UnprocessableEntityError.WithDetails(map[string]string{
 			"validation_error": err.Error(),
 		})
 	}

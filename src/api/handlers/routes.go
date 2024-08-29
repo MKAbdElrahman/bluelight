@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
@@ -37,11 +37,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	// INVALID ROUTES HANDLERS
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		em.SendClientError(w, r, v1.NotFoundError)
+		em.SendClientError(w, r, apierror.NotFoundError)
 	})
 
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		em.SendClientError(w, r, v1.MethodNotAllowedError)
+		em.SendClientError(w, r, apierror.MethodNotAllowedError)
 	})
 
 	// INFRASTRUCTURE

@@ -1,9 +1,11 @@
-package v1
+package v1movie
 
 import (
 	"net/http"
 	"slices"
 
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
+	"bluelight.mkcodedev.com/src/api/contracts/webutil"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 )
 
@@ -19,16 +21,16 @@ type ListMoviesRequestQueryParams struct {
 	Sort     string
 }
 
-func NewListMoviesRequest(r *http.Request) (ListMoviesRequest, *ClientError) {
+func NewListMoviesRequest(r *http.Request) (ListMoviesRequest, *apierror.ClientError) {
 	req := ListMoviesRequest{}
 
 	qParams, errDetails := newListMoviesRequestQueryParams(r)
 	if len(errDetails) != 0 {
-		return ListMoviesRequest{}, BadRequestError.WithDetails(errDetails)
+		return ListMoviesRequest{}, apierror.BadRequestError.WithDetails(errDetails)
 	}
 	errDetails = qParams.validateRanges()
 	if len(errDetails) != 0 {
-		return ListMoviesRequest{}, BadRequestError.WithDetails(errDetails)
+		return ListMoviesRequest{}, apierror.BadRequestError.WithDetails(errDetails)
 	}
 
 	req.QueryParams = qParams
@@ -38,8 +40,8 @@ func NewListMoviesRequest(r *http.Request) (ListMoviesRequest, *ClientError) {
 
 func newListMoviesRequestQueryParams(r *http.Request) (ListMoviesRequestQueryParams, map[string]string) {
 	qParams := ListMoviesRequestQueryParams{
-		Title:    GetQueryParam(r, "title"),
-		Genres:   GetQueryParamSlice(r, "genres", ","),
+		Title:    webutil.GetQueryParam(r, "title"),
+		Genres:   webutil.GetQueryParamSlice(r, "genres", ","),
 		Page:     1,
 		PageSize: 20,
 		Sort:     "id",
@@ -48,21 +50,21 @@ func newListMoviesRequestQueryParams(r *http.Request) (ListMoviesRequestQueryPar
 	errors := make(map[string]string)
 
 	// Parse and validate the "page" query parameter
-	if page, err := GetQueryParamInt(r, "page"); err != nil {
+	if page, err :=  webutil.GetQueryParamInt(r, "page"); err != nil {
 		errors["page"] = "invalid page number"
 	} else if page != 0 {
 		qParams.Page = page
 	}
 
 	// Parse and validate the "pageSize" query parameter
-	if pageSize, err := GetQueryParamInt(r, "page_size"); err != nil {
+	if pageSize, err :=  webutil.GetQueryParamInt(r, "page_size"); err != nil {
 		errors["page_size"] = "invalid page size"
 	} else if pageSize != 0 {
 		qParams.PageSize = pageSize
 	}
 
 	// Parse the "sort" query parameter
-	if sort := GetQueryParam(r, "sort"); sort != "" {
+	if sort :=  webutil.GetQueryParam(r, "sort"); sort != "" {
 		qParams.Sort = sort
 	}
 

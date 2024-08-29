@@ -1,4 +1,4 @@
-package v1
+package webutil
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func parseIdFromPath(r *http.Request) (int64, error) {
+func ParseIdFromPath(r *http.Request) (int64, error) {
 	idFromPath := r.PathValue("id")
 	parsedId, err := strconv.ParseInt(idFromPath, 10, 64)
 	return parsedId, err

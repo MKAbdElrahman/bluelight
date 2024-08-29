@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
 )
 
@@ -25,7 +25,7 @@ func NewErrorHandler(logger *slog.Logger) *ErrorHandeler {
 }
 
 // SendServerError handles server-side errors.
-func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, serverErr v1.ServerError) {
+func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, serverErr *apierror.ServerError) {
 	if e.LogServerErrors {
 		logError(e.logger, r, fmt.Errorf(serverErr.InternalMessage), serverErr.Code)
 	}
@@ -42,7 +42,7 @@ func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, 
 }
 
 // SendClientError handles client-side errors.
-func (e *ErrorHandeler) SendClientError(w http.ResponseWriter, r *http.Request, clientErr *v1.ClientError) {
+func (e *ErrorHandeler) SendClientError(w http.ResponseWriter, r *http.Request, clientErr *apierror.ClientError) {
 	if e.LogClientErrors {
 		logError(e.logger, r, fmt.Errorf(clientErr.UserFacingMessage), clientErr.Code)
 	}

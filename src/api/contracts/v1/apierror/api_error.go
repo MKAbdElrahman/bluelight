@@ -1,8 +1,9 @@
-package v1
+package apierror
 
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 // Default ServerError values
@@ -65,6 +66,20 @@ var (
 type ServerError struct {
 	Code            int    `json:"code"`    // HTTP status code (e.g., 500)
 	InternalMessage string `json:"message"` // Human-readable error message
+}
+
+func NewServerError(code int, msg string) *ServerError {
+	return &ServerError{
+		Code:            code,
+		InternalMessage: msg,
+	}
+}
+
+func NewInternalServerError(err error) *ServerError {
+	return &ServerError{
+		Code:            http.StatusInternalServerError,
+		InternalMessage: err.Error(),
+	}
 }
 
 // Error implements the error interface for ServerError

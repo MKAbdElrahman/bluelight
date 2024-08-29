@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
-	 "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
+	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 )
 
 func PanicRecoverer(em *errorhandler.ErrorHandeler) middlewareFunc {
@@ -15,10 +15,9 @@ func PanicRecoverer(em *errorhandler.ErrorHandeler) middlewareFunc {
 				defer func() {
 					if err := recover(); err != nil {
 						w.Header().Set("Connection", "close")
-						em.SendServerError(w, r, v1.ServerError{
-							InternalMessage: fmt.Sprintf("%s", err),
-							Code:            http.StatusInternalServerError,
-						})
+						em.SendServerError(w, r,
+							apierror.NewInternalServerError(fmt.Errorf("%s", err)),
+						)
 					}
 				}()
 				next.ServeHTTP(w, r)

@@ -1,7 +1,10 @@
-package v1
+package v1movie
 
 import (
 	"net/http"
+
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
+	"bluelight.mkcodedev.com/src/api/contracts/webutil"
 )
 
 // DeleteMovieRequest represents the request structure for deleting a movie.
@@ -9,11 +12,11 @@ type DeleteMovieRequest struct {
 	IdPathParam int64
 }
 
-func NewDeleteMovieRequest(r *http.Request) (DeleteMovieRequest, *ClientError) {
+func NewDeleteMovieRequest(r *http.Request) (DeleteMovieRequest, *apierror.ClientError) {
 
-	parsedId, err := parseIdFromPath(r)
+	parsedId, err := webutil.ParseIdFromPath(r)
 	if err != nil {
-		return DeleteMovieRequest{}, BadRequestError
+		return DeleteMovieRequest{}, apierror.BadRequestError
 	}
 
 	req := DeleteMovieRequest{

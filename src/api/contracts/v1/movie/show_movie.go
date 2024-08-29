@@ -1,18 +1,21 @@
-package v1
+package v1movie
 
 import (
 	"net/http"
+
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
+	"bluelight.mkcodedev.com/src/api/contracts/webutil"
 )
 
 type ShowMovieRequest struct {
 	IdPathParam int64
 }
 
-func NewShowMovieRequest(r *http.Request) (ShowMovieRequest, *ClientError) {
+func NewShowMovieRequest(r *http.Request) (ShowMovieRequest, *apierror.ClientError) {
 
-	parsedId, err := parseIdFromPath(r)
+	parsedId, err := webutil.ParseIdFromPath(r)
 	if err != nil {
-		return ShowMovieRequest{}, BadRequestError
+		return ShowMovieRequest{}, apierror.BadRequestError
 	}
 
 	req := ShowMovieRequest{

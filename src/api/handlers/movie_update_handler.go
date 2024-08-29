@@ -4,7 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
+	v1 "bluelight.mkcodedev.com/src/api/contracts/v1/movie"
 	errorhandler "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/lib/jsonio"
@@ -25,9 +26,9 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 		if domainErr != nil {
 			switch {
 			case errors.Is(domainErr, movie.ErrRecordNotFound):
-				em.SendClientError(w, r, v1.NotFoundError)
+				em.SendClientError(w, r, apierror.NotFoundError)
 			default:
-				em.SendServerError(w, r, v1.ServerError{
+				em.SendServerError(w, r, &apierror.ServerError{
 					Code:            http.StatusInternalServerError,
 					InternalMessage: domainErr.Error(),
 				})
@@ -53,9 +54,9 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 		if domainErr != nil {
 			switch {
 			case errors.Is(domainErr, movie.ErrEditConflict):
-				em.SendClientError(w, r, v1.ConflictError)
+				em.SendClientError(w, r, apierror.ConflictError)
 			default:
-				em.SendServerError(w, r, v1.ServerError{
+				em.SendServerError(w, r, &apierror.ServerError{
 					Code:            http.StatusInternalServerError,
 					InternalMessage: domainErr.Error(),
 				})
@@ -75,10 +76,8 @@ func newUpdateMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *mov
 
 		err := jsonio.SendJSON(w, jsonio.Envelope{"movie": res}, res.Status(), res.Headers())
 		if err != nil {
-			em.SendServerError(w, r, v1.ServerError{
-				Code:            http.StatusInternalServerError,
-				InternalMessage: err.Error(),
-			})
+			em.SendServerError(w, r, apierror.NewInternalServerError(err))
+
 			return
 		}
 	}

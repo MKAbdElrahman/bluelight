@@ -1,13 +1,12 @@
 package middleware
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"sync"
 	"time"
 
-	v1 "bluelight.mkcodedev.com/src/api/contracts/v1"
+	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"golang.org/x/time/rate"
 )
@@ -46,10 +45,8 @@ func RateLimiter(em *errorhandler.ErrorHandeler, cfg RateLimiterConfig) middlewa
 			if cfg.Enabled {
 				ip, _, err := net.SplitHostPort(r.RemoteAddr)
 				if err != nil {
-					em.SendServerError(w, r, v1.ServerError{
-						InternalMessage: fmt.Sprintf("%s", err),
-						Code:            http.StatusInternalServerError,
-					})
+					em.SendServerError(w, r,
+						apierror.NewInternalServerError(err))
 					return
 				}
 				mu.Lock()
@@ -60,7 +57,7 @@ func RateLimiter(em *errorhandler.ErrorHandeler, cfg RateLimiterConfig) middlewa
 
 				if !clients[ip].limiter.Allow() {
 					mu.Unlock()
-					em.SendClientError(w, r, v1.TooManyRequestsError)
+					em.SendClientError(w, r, apierror.TooManyRequestsError)
 					return
 				}
 				mu.Unlock()
