@@ -15,6 +15,7 @@ import (
 
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"bluelight.mkcodedev.com/src/api/router"
+	"bluelight.mkcodedev.com/src/infrastructure/mailer"
 	"github.com/charmbracelet/log"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -39,6 +40,14 @@ type dbConfig struct {
 	maxIdleTime  time.Duration
 }
 
+type smtp struct {
+	host     string
+	port     int
+	username string
+	password string
+	sender   string
+}
+
 func main() {
 	// LOGGING
 	logHandler := log.NewWithOptions(os.Stdout, log.Options{
@@ -56,6 +65,7 @@ func main() {
 		server  serverConfig
 		db      dbConfig
 		limiter middleware.RateLimiterConfig
+		smtp    smtp
 	}
 
 	flag.IntVar(&cfg.server.port, "port", 3000, "API server port")
@@ -75,12 +85,21 @@ func main() {
 	flag.IntVar(&cfg.limiter.Burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.Enabled, "limiter-enabled", true, "Enable rate limiter")
 
+	flag.StringVar(&cfg.smtp.host, "smtp-base-url", "https://sandbox.api.mailtrap.io", "SMTP base url")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "no-reply@bluelight.mkcodedev.net", "SMTP sender")
+
 	flag.Parse()
 
 	if cfg.server.version {
 		fmt.Printf("API Version: %s\n", version)
 		os.Exit(0)
 	}
+
+	mailtrapURL := "https://sandbox.api.mailtrap.io/api/send/3109121"
+	apiKey := "245e889dc812ac10b67d19e4801ba7e7"
+	senderEmail := cfg.smtp.sender
+
+	mailerClient := mailer.New(mailtrapURL, apiKey, senderEmail)
 
 	// POSTGRESQL
 	db, err := openDB(cfg.db)
@@ -98,6 +117,7 @@ func main() {
 		API_Environment: cfg.server.env,
 		API_Version:     version,
 		DB:              db,
+		Mailer:          mailerClient,
 		LimiterConfig:   cfg.limiter,
 	})
 

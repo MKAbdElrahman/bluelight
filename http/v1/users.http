@@ -2,7 +2,7 @@
 POST    http://localhost:3000/v1/users
  
  {
-  "name": "dddd",
-  "email": "mkdd@gdmddhai.com",
-  "password": "dddddddddd"
+  "name": "Mohamed Kamal",
+  "email": "koska@example.com",
+  "password": "pas55word"
 }

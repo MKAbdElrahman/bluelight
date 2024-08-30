@@ -16,6 +16,7 @@ import (
 	"bluelight.mkcodedev.com/src/core/domain/movie"
 	"bluelight.mkcodedev.com/src/core/domain/user"
 	"bluelight.mkcodedev.com/src/infrastructure/db/repositories"
+	"bluelight.mkcodedev.com/src/infrastructure/mailer"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -24,6 +25,7 @@ type RouterConfig struct {
 	API_Version     string
 	Logger          *slog.Logger
 	DB              *sql.DB
+	Mailer          mailer.Mailer
 	LimiterConfig   middleware.RateLimiterConfig
 }
 
@@ -72,7 +74,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Get("/v1/movies", movieHandlers.NewListMovieHandlerFunc(em, movieService))
 	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
 
-	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(em, userService))
+	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(em, userService, cfg.Mailer))
 
 	return r
 }
