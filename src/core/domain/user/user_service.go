@@ -1,12 +1,22 @@
 package user
 
-type UserService struct {
-	userRepository UserRepositoty
+import (
+	"context"
+)
+
+type Mailer interface {
+	WelcomeNewRegisteredUser(ctx context.Context, recipientEmail, recipientName string) error
 }
 
-func NewUserService(r UserRepositoty) *UserService {
+type UserService struct {
+	userRepository UserRepositoty
+	mailer         Mailer
+}
+
+func NewUserService(r UserRepositoty, mailer Mailer) *UserService {
 	return &UserService{
 		userRepository: r,
+		mailer:         mailer,
 	}
 }
 
@@ -23,6 +33,11 @@ func (svc *UserService) RegisterUser(params UserRegisterationParams) (*User, err
 	}
 
 	err = svc.userRepository.Create(u)
+	if err != nil {
+		return nil, err
+	}
+
+	err = svc.mailer.WelcomeNewRegisteredUser(context.Background(), u.Email, u.Name)
 	if err != nil {
 		return nil, err
 	}

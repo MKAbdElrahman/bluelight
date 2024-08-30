@@ -13,9 +13,13 @@ import (
 
 type Mailer struct {
 	client *http.Client
-	url    string
-	apiKey string
-	sender string
+	config Config
+}
+
+type Config struct {
+	URL    string
+	APIKey string
+	Sender EmailAddress
 }
 
 type EmailPayload struct {
@@ -31,31 +35,40 @@ type EmailAddress struct {
 	Name  string `json:"name"`
 }
 
-func New(url, apiKey, sender string) Mailer {
-	client := &http.Client{}
-	return Mailer{
-		client: client,
-		url:    url,
-		apiKey: apiKey,
-		sender: sender,
+// NewMailer initializes a new Mailer with the given configuration.
+func NewMailer(config Config) *Mailer {
+	return &Mailer{
+		client: &http.Client{},
+		config: config,
 	}
 }
 
-func (m Mailer) WelcomeNewRegisteredUser(recipientEmail, recipientName string) error {
-	method := "POST"
-
-	var body bytes.Buffer
-	err := templates.UserWelcome(recipientName).Render(context.Background(), &body)
-
+// WelcomeNewRegisteredUser sends a welcome email to a new user.
+func (m *Mailer) WelcomeNewRegisteredUser(ctx context.Context, recipientEmail, recipientName string) error {
+	body, err := m.renderTemplate(ctx, recipientName)
 	if err != nil {
-		return fmt.Errorf("failed to execute email template: %w", err)
+		return err
 	}
+	payload := m.buildEmailPayload(recipientEmail, recipientName, body)
+	return m.sendEmail(payload)
+}
 
-	payload := EmailPayload{
-		From: EmailAddress{
-			Email: m.sender,
-			Name:  "Bluelight",
-		},
+
+// renderTemplate renders the welcome email template.
+func (m *Mailer) renderTemplate(ctx context.Context, recipientName string) (string, error) {
+	var body bytes.Buffer
+	err := templates.UserWelcome(recipientName).Render(ctx, &body)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute email template: %w", err)
+	}
+	return body.String(), nil
+}
+
+
+// buildEmailPayload constructs the email payload for the welcome email.
+func (m *Mailer) buildEmailPayload(recipientEmail, recipientName, body string) EmailPayload {
+	return EmailPayload{
+		From: m.config.Sender,
 		To: []EmailAddress{
 			{
 				Email: recipientEmail,
@@ -63,21 +76,24 @@ func (m Mailer) WelcomeNewRegisteredUser(recipientEmail, recipientName string) e
 			},
 		},
 		Subject:  "Welcome to Bluelight, " + recipientName + "!",
-		HTML:     body.String(),
+		HTML:     body,
 		Category: "User Registration",
 	}
+}
 
+// sendEmail sends the constructed email payload using the configured email service.
+func (m *Mailer) sendEmail(payload EmailPayload) error {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal email payload: %w", err)
 	}
 
-	req, err := http.NewRequest(method, m.url, bytes.NewReader(payloadBytes))
+	req, err := http.NewRequest("POST", m.config.URL, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", m.apiKey))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", m.config.APIKey))
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := m.client.Do(req)

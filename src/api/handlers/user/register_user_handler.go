@@ -13,7 +13,7 @@ import (
 	"bluelight.mkcodedev.com/src/infrastructure/mailer"
 )
 
-func NewRegisterUserHandlerFunc(em *errorhandler.ErrorHandeler, userService *user.UserService, mailerService mailer.Mailer) http.HandlerFunc {
+func NewRegisterUserHandlerFunc(em *errorhandler.ErrorHandeler, userService *user.UserService, mailerService *mailer.Mailer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
 		req, requestErr := v1.NewRegisterUserRequest(r)
@@ -41,12 +41,6 @@ func NewRegisterUserHandlerFunc(em *errorhandler.ErrorHandeler, userService *use
 			default:
 				em.SendServerError(w, r, apierror.NewInternalServerError(err))
 			}
-			return
-		}
-
-		err = mailerService.WelcomeNewRegisteredUser(u.Email, u.Name)
-		if err != nil {
-			em.SendServerError(w, r, apierror.NewInternalServerError(err))
 			return
 		}
 

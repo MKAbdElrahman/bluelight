@@ -99,7 +99,14 @@ func main() {
 	apiKey := "245e889dc812ac10b67d19e4801ba7e7"
 	senderEmail := cfg.smtp.sender
 
-	mailerClient := mailer.New(mailtrapURL, apiKey, senderEmail)
+	mailerClient := mailer.NewMailer(mailer.Config{
+		URL:    mailtrapURL,
+		APIKey: apiKey,
+		Sender: mailer.EmailAddress{
+			Email: senderEmail,
+			Name:  "Bluelight",
+		},
+	})
 
 	// POSTGRESQL
 	db, err := openDB(cfg.db)

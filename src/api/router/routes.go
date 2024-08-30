@@ -25,7 +25,7 @@ type RouterConfig struct {
 	API_Version     string
 	Logger          *slog.Logger
 	DB              *sql.DB
-	Mailer          mailer.Mailer
+	Mailer          *mailer.Mailer
 	LimiterConfig   middleware.RateLimiterConfig
 }
 
@@ -65,7 +65,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		repositories.PostgresUserRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	userService := user.NewUserService(userRepository)
+	userService := user.NewUserService(userRepository, cfg.Mailer)
 	// ROUTES
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
