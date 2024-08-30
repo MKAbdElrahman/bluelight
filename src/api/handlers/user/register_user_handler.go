@@ -1,10 +1,7 @@
 package userhandlers
 
 import (
-	"context"
 	"errors"
-	"fmt"
-	"log/slog"
 	"net/http"
 	"sync"
 
@@ -14,10 +11,9 @@ import (
 	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 	"bluelight.mkcodedev.com/src/core/domain/user"
 	"bluelight.mkcodedev.com/src/core/domain/verrors"
-	"bluelight.mkcodedev.com/src/infrastructure/mailer"
 )
 
-func NewRegisterUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em *errorhandler.ErrorHandeler, userService *user.UserService, mailerService *mailer.Mailer) http.HandlerFunc {
+func NewRegisterUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em *errorhandler.ErrorHandeler, userService *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
 		req, requestErr := v1.NewRegisterUserRequest(r)
@@ -33,7 +29,7 @@ func NewRegisterUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em 
 			Password: req.Body.Password,
 		}
 
-		u, err := userService.RegisterUser(params)
+		u, err := userService.RegisterUser(backgroundRoutinesWaitGroup, em.Logger, params)
 		if err != nil {
 
 			var validErr *verrors.ValidationError
@@ -47,16 +43,6 @@ func NewRegisterUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em 
 			}
 			return
 		}
-
-		backgroundRoutinesWaitGroup.Add(1)
-		background(em.Logger, func() {
-			defer backgroundRoutinesWaitGroup.Done()
-			err = mailerService.WelcomeNewRegisteredUser(context.Background(), u.Email, u.Name)
-			if err != nil {
-				em.Logger.Error("failed to send welcome email after retries", "err", err)
-			}
-		})
-
 		res := v1.RegisterUserResponse{
 			Id:        u.Id,
 			Name:      u.Name,
@@ -72,16 +58,4 @@ func NewRegisterUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em 
 			return
 		}
 	}
-}
-
-func background(logger *slog.Logger, fn func()) {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				logger.Error("panic", "err", fmt.Sprintf("%v", err))
-			}
-		}()
-		fn()
-	}()
-
 }

@@ -67,7 +67,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		repositories.PostgresUserRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	userService := user.NewUserService(userRepository)
+	userService := user.NewUserService(userRepository, cfg.Mailer)
 	// ROUTES
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
@@ -76,7 +76,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Get("/v1/movies", movieHandlers.NewListMovieHandlerFunc(em, movieService))
 	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
 
-	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService, cfg.Mailer))
+	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService))
 
 	return r
 }
