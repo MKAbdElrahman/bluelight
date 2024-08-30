@@ -5,9 +5,10 @@ env:
   MIGRATIONS_DIR: ./src/infrastructure/db/migrations
   POSTGRESQL_URL: "{{.BLUELIGHT_DB_DSN}}"
 tasks:
-  ## API
 
-  run: go run ./src/api/cmd {{.CLI_ARGS}}
+  ## API
+  run: 'wgo -file=.go  -file=.templ -xfile=_templ.go templ generate :: go run ./src/api/cmd {{.CLI_ARGS}}'
+
   psql: psql  $POSTGRESQL_URL
 
   ## DATABASE MIGRATIONS
@@ -38,3 +39,5 @@ tasks:
     desc: used for see which migration version database is currently on
     cmds:
       - migrate -path=$MIGRATIONS_DIR -database=$POSTGRESQL_URL version
+  templ-install: go install github.com/a-h/templ/cmd/templ@latest
+
