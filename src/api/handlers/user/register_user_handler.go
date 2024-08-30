@@ -17,7 +17,7 @@ import (
 	"bluelight.mkcodedev.com/src/infrastructure/mailer"
 )
 
-func NewRegisterUserHandlerFunc(wg *sync.WaitGroup, em *errorhandler.ErrorHandeler, userService *user.UserService, mailerService *mailer.Mailer) http.HandlerFunc {
+func NewRegisterUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em *errorhandler.ErrorHandeler, userService *user.UserService, mailerService *mailer.Mailer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
 		req, requestErr := v1.NewRegisterUserRequest(r)
@@ -48,9 +48,9 @@ func NewRegisterUserHandlerFunc(wg *sync.WaitGroup, em *errorhandler.ErrorHandel
 			return
 		}
 
-		wg.Add(1)
+		backgroundRoutinesWaitGroup.Add(1)
 		background(em.Logger, func() {
-			defer wg.Done()
+			defer backgroundRoutinesWaitGroup.Done()
 			err = mailerService.WelcomeNewRegisteredUser(context.Background(), u.Email, u.Name)
 			if err != nil {
 				em.Logger.Error("failed to send welcome email after retries", "err", err)

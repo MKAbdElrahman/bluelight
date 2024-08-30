@@ -42,8 +42,8 @@ type dbConfig struct {
 }
 
 type smtp struct {
-	host     string
-	sender   string
+	host   string
+	sender string
 }
 
 func main() {
@@ -119,13 +119,13 @@ func main() {
 	// ROUTER
 	backgroundRoutinesWaitGroup := &sync.WaitGroup{}
 	router := router.NewRouter(router.RouterConfig{
-		Logger:          logger,
-		API_Environment: cfg.server.env,
-		API_Version:     version,
-		DB:              db,
-		Mailer:          mailerClient,
-		LimiterConfig:   cfg.limiter,
-		WaitGroup:       backgroundRoutinesWaitGroup,
+		Logger:              logger,
+		API_Environment:     cfg.server.env,
+		API_Version:         version,
+		DB:                  db,
+		Mailer:              mailerClient,
+		LimiterConfig:       cfg.limiter,
+		BackgroundWaitGroup: backgroundRoutinesWaitGroup,
 	})
 
 	// SERVER
@@ -137,7 +137,7 @@ func main() {
 
 }
 
-func serve(wg *sync.WaitGroup, logger *slog.Logger, r http.Handler, cfg serverConfig) error {
+func serve(backgroundRoutinesWaitGroup *sync.WaitGroup, logger *slog.Logger, r http.Handler, cfg serverConfig) error {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      r,
@@ -162,7 +162,7 @@ func serve(wg *sync.WaitGroup, logger *slog.Logger, r http.Handler, cfg serverCo
 		}
 
 		logger.Info("completing background tasks", "addr", srv.Addr)
-		wg.Wait()
+		backgroundRoutinesWaitGroup.Wait()
 		shutdownError <- nil
 	}()
 

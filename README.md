@@ -17,7 +17,7 @@
 
 - entities enforce business rules like "title can't be empty"
     - they return unprocessible entites
-
+- There is a central waitgroup used as a central shared resource for all background goroutines to make sure we don't shutdown before all goroutines are done. 
 
 ## To-Do List
 

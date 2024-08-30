@@ -22,13 +22,13 @@ import (
 )
 
 type RouterConfig struct {
-	API_Environment string
-	API_Version     string
-	Logger          *slog.Logger
-	DB              *sql.DB
-	Mailer          *mailer.Mailer
-	LimiterConfig   middleware.RateLimiterConfig
-	WaitGroup       *sync.WaitGroup
+	API_Environment     string
+	API_Version         string
+	Logger              *slog.Logger
+	DB                  *sql.DB
+	Mailer              *mailer.Mailer
+	LimiterConfig       middleware.RateLimiterConfig
+	BackgroundWaitGroup *sync.WaitGroup
 }
 
 func NewRouter(cfg RouterConfig) http.Handler {
@@ -76,7 +76,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Get("/v1/movies", movieHandlers.NewListMovieHandlerFunc(em, movieService))
 	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
 
-	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.WaitGroup, em, userService, cfg.Mailer))
+	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService, cfg.Mailer))
 
 	return r
 }
