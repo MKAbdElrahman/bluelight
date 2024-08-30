@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
@@ -27,6 +28,7 @@ type RouterConfig struct {
 	DB              *sql.DB
 	Mailer          *mailer.Mailer
 	LimiterConfig   middleware.RateLimiterConfig
+	WaitGroup       *sync.WaitGroup
 }
 
 func NewRouter(cfg RouterConfig) http.Handler {
@@ -65,7 +67,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		repositories.PostgresUserRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	userService := user.NewUserService(userRepository, cfg.Mailer)
+	userService := user.NewUserService(userRepository)
 	// ROUTES
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
@@ -74,7 +76,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Get("/v1/movies", movieHandlers.NewListMovieHandlerFunc(em, movieService))
 	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
 
-	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(em, userService, cfg.Mailer))
+	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.WaitGroup, em, userService, cfg.Mailer))
 
 	return r
 }

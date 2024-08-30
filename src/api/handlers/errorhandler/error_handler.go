@@ -11,14 +11,14 @@ import (
 
 // ErrorManager handles error logging and responses.
 type ErrorHandeler struct {
-	logger          *slog.Logger
+	Logger          *slog.Logger
 	LogClientErrors bool
 	LogServerErrors bool
 }
 
 func NewErrorHandler(logger *slog.Logger) *ErrorHandeler {
 	return &ErrorHandeler{
-		logger:          logger,
+		Logger:          logger,
 		LogClientErrors: false,
 		LogServerErrors: true,
 	}
@@ -27,7 +27,7 @@ func NewErrorHandler(logger *slog.Logger) *ErrorHandeler {
 // SendServerError handles server-side errors.
 func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, serverErr *apierror.ServerError) {
 	if e.LogServerErrors {
-		logError(e.logger, r, fmt.Errorf(serverErr.InternalMessage), serverErr.Code)
+		logError(e.Logger, r, fmt.Errorf(serverErr.InternalMessage), serverErr.Code)
 	}
 
 	data := jsonio.Envelope{"error": http.StatusText(serverErr.Code)}
@@ -35,7 +35,7 @@ func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, 
 
 	if err != nil {
 		if e.LogServerErrors {
-			logError(e.logger, r, err, http.StatusInternalServerError)
+			logError(e.Logger, r, err, http.StatusInternalServerError)
 		}
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -44,14 +44,14 @@ func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, 
 // SendClientError handles client-side errors.
 func (e *ErrorHandeler) SendClientError(w http.ResponseWriter, r *http.Request, clientErr *apierror.ClientError) {
 	if e.LogClientErrors {
-		logError(e.logger, r, fmt.Errorf(clientErr.UserFacingMessage), clientErr.Code)
+		logError(e.Logger, r, fmt.Errorf(clientErr.UserFacingMessage), clientErr.Code)
 	}
 
 	data := jsonio.Envelope{"error": clientErr}
 	err := jsonio.SendJSON(w, data, clientErr.Code, nil)
 	if err != nil {
 		if e.LogServerErrors {
-			logError(e.logger, r, err, http.StatusInternalServerError)
+			logError(e.Logger, r, err, http.StatusInternalServerError)
 		}
 		w.WriteHeader(http.StatusInternalServerError)
 	}

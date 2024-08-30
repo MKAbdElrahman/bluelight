@@ -10,13 +10,11 @@ type Mailer interface {
 
 type UserService struct {
 	userRepository UserRepositoty
-	mailer         Mailer
 }
 
-func NewUserService(r UserRepositoty, mailer Mailer) *UserService {
+func NewUserService(r UserRepositoty,  ) *UserService {
 	return &UserService{
 		userRepository: r,
-		mailer:         mailer,
 	}
 }
 
@@ -33,11 +31,6 @@ func (svc *UserService) RegisterUser(params UserRegisterationParams) (*User, err
 	}
 
 	err = svc.userRepository.Create(u)
-	if err != nil {
-		return nil, err
-	}
-
-	err = svc.mailer.WelcomeNewRegisteredUser(context.Background(), u.Email, u.Name)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -42,9 +43,6 @@ type dbConfig struct {
 
 type smtp struct {
 	host     string
-	port     int
-	username string
-	password string
 	sender   string
 }
 
@@ -119,6 +117,7 @@ func main() {
 	logger.Info("databasse connection pool established")
 
 	// ROUTER
+	backgroundRoutinesWaitGroup := &sync.WaitGroup{}
 	router := router.NewRouter(router.RouterConfig{
 		Logger:          logger,
 		API_Environment: cfg.server.env,
@@ -126,10 +125,11 @@ func main() {
 		DB:              db,
 		Mailer:          mailerClient,
 		LimiterConfig:   cfg.limiter,
+		WaitGroup:       backgroundRoutinesWaitGroup,
 	})
 
 	// SERVER
-	err = serve(logger, router, cfg.server)
+	err = serve(backgroundRoutinesWaitGroup, logger, router, cfg.server)
 	if err != nil {
 		logger.Error("server failed to gracefully shutdown", "error", err.Error())
 		os.Exit(1)
@@ -137,7 +137,7 @@ func main() {
 
 }
 
-func serve(logger *slog.Logger, r http.Handler, cfg serverConfig) error {
+func serve(wg *sync.WaitGroup, logger *slog.Logger, r http.Handler, cfg serverConfig) error {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      r,
@@ -156,7 +156,14 @@ func serve(logger *slog.Logger, r http.Handler, cfg serverConfig) error {
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.shutdownTimeout)
 		defer cancel()
 
-		shutdownError <- srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		logger.Info("completing background tasks", "addr", srv.Addr)
+		wg.Wait()
+		shutdownError <- nil
 	}()
 
 	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env)

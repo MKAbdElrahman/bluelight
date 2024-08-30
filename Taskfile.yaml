@@ -7,7 +7,8 @@ env:
 tasks:
 
   ## API
-  run: 'wgo -file=.go  -file=.templ -xfile=_templ.go templ generate :: go run ./src/api/cmd {{.CLI_ARGS}}'
+  watch: 'wgo -file=.go  -file=.templ -xfile=_templ.go templ generate :: go run ./src/api/cmd {{.CLI_ARGS}}'
+  run: go run ./src/api/cmd {{.CLI_ARGS}}
 
   psql: psql  $POSTGRESQL_URL
 

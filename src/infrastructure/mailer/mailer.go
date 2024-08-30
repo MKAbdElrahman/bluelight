@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"bluelight.mkcodedev.com/src/infrastructure/mailer/templates"
 )
@@ -53,7 +54,6 @@ func (m *Mailer) WelcomeNewRegisteredUser(ctx context.Context, recipientEmail, r
 	return m.sendEmail(payload)
 }
 
-
 // renderTemplate renders the welcome email template.
 func (m *Mailer) renderTemplate(ctx context.Context, recipientName string) (string, error) {
 	var body bytes.Buffer
@@ -63,7 +63,6 @@ func (m *Mailer) renderTemplate(ctx context.Context, recipientName string) (stri
 	}
 	return body.String(), nil
 }
-
 
 // buildEmailPayload constructs the email payload for the welcome email.
 func (m *Mailer) buildEmailPayload(recipientEmail, recipientName, body string) EmailPayload {
@@ -107,5 +106,7 @@ func (m *Mailer) sendEmail(payload EmailPayload) error {
 		return fmt.Errorf("failed to send email, status: %d, response: %s", res.StatusCode, string(body))
 	}
 
+	time.Sleep(5 * time.Second)
+	
 	return nil
 }
