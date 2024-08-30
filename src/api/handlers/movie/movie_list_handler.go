@@ -1,6 +1,7 @@
 package moviehandlers
 
 import (
+	"errors"
 	"net/http"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
@@ -8,6 +9,7 @@ import (
 	errorhandler "bluelight.mkcodedev.com/src/api/handlers/errorhandler"
 	"bluelight.mkcodedev.com/src/api/lib/jsonio"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
+	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
 func NewListMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie.MovieService) http.HandlerFunc {
@@ -18,7 +20,7 @@ func NewListMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie
 			em.SendClientError(w, r, requestErr)
 			return
 		}
-		movies, paginationMetadata, err := movieService.GetAllMovies(movie.MovieFilters{
+		movies, paginationMetadata, err := movieService.ListMovies(movie.MovieFilters{
 			Title:    req.QueryParams.Title,
 			Genres:   req.QueryParams.Genres,
 			Page:     req.QueryParams.Page,
@@ -27,10 +29,13 @@ func NewListMovieHandlerFunc(em *errorhandler.ErrorHandeler, movieService *movie
 		})
 
 		if err != nil {
-			em.SendServerError(w, r, &apierror.ServerError{
-				Code:            http.StatusInternalServerError,
-				InternalMessage: err.Error(),
-			})
+			var validErr *verrors.ValidationError
+			switch {
+			case errors.As(err, &validErr):
+				em.SendClientError(w, r, apierror.UnprocessableEntityError.WithValidationError(validErr))
+			default:
+				em.SendServerError(w, r, apierror.NewInternalServerError(err))
+			}
 			return
 		}
 

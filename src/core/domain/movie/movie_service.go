@@ -39,7 +39,12 @@ func (svc *MovieService) GetMovie(id int64) (*Movie, error) {
 	return svc.movieRepository.Read(id)
 }
 
-func (svc *MovieService) GetAllMovies(filters MovieFilters) ([]*Movie, MoviesListPaginationMetadata, error) {
+func (svc *MovieService) ListMovies(filters MovieFilters) ([]*Movie, MoviesListPaginationMetadata, error) {
+
+	err := filters.validateRanges()
+	if err != nil {
+		return nil, MoviesListPaginationMetadata{}, err
+	}
 	return svc.movieRepository.ReadAll(filters)
 }
 

@@ -115,19 +115,6 @@ func (e *ClientError) Error() string {
 	return fmt.Sprintf("ClientError: Code=%d, Message=%s", e.Code, e.UserFacingMessage)
 }
 
-// WithDetails adds details to the ClientError and returns the updated ClientError.
-func (e *ClientError) WithDetails(details map[string]string) *ClientError {
-	// If the ClientError already has details, merge them with the new ones
-	if e.UserFacingDetails == nil {
-		e.UserFacingDetails = details
-	} else {
-		for key, value := range details {
-			e.UserFacingDetails[key] = value
-		}
-	}
-	return e
-}
-
 func (e *ClientError) WithValidationError(err *verrors.ValidationError) *ClientError {
 	e.UserFacingDetails = map[string]string{
 		err.Field: err.Message,

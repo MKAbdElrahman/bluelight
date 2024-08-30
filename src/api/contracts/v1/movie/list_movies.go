@@ -2,11 +2,11 @@ package v1movie
 
 import (
 	"net/http"
-	"slices"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/api/contracts/webutil"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
+	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
 type ListMoviesRequest struct {
@@ -25,12 +25,8 @@ func NewListMoviesRequest(r *http.Request) (ListMoviesRequest, *apierror.ClientE
 	req := ListMoviesRequest{}
 
 	qParams, errDetails := newListMoviesRequestQueryParams(r)
-	if len(errDetails) != 0 {
-		return ListMoviesRequest{}, apierror.BadRequestError.WithDetails(errDetails)
-	}
-	errDetails = qParams.validateRanges()
-	if len(errDetails) != 0 {
-		return ListMoviesRequest{}, apierror.BadRequestError.WithDetails(errDetails)
+	if errDetails != nil {
+		return ListMoviesRequest{}, apierror.BadRequestError.WithValidationError(errDetails)
 	}
 
 	req.QueryParams = qParams
@@ -38,7 +34,7 @@ func NewListMoviesRequest(r *http.Request) (ListMoviesRequest, *apierror.ClientE
 	return req, nil
 }
 
-func newListMoviesRequestQueryParams(r *http.Request) (ListMoviesRequestQueryParams, map[string]string) {
+func newListMoviesRequestQueryParams(r *http.Request) (ListMoviesRequestQueryParams, *verrors.ValidationError) {
 	qParams := ListMoviesRequestQueryParams{
 		Title:    webutil.GetQueryParam(r, "title"),
 		Genres:   webutil.GetQueryParamSlice(r, "genres", ","),
@@ -47,53 +43,31 @@ func newListMoviesRequestQueryParams(r *http.Request) (ListMoviesRequestQueryPar
 		Sort:     "id",
 	}
 
-	errors := make(map[string]string)
-
 	// Parse and validate the "page" query parameter
-	if page, err :=  webutil.GetQueryParamInt(r, "page"); err != nil {
-		errors["page"] = "invalid page number"
-	} else if page != 0 {
+	page, err := webutil.GetQueryParamInt(r, "page")
+
+	if err != nil {
+		return ListMoviesRequestQueryParams{}, verrors.NewValidationError("page", "invalid page number")
+	}
+
+	if page != 0 {
 		qParams.Page = page
 	}
 
 	// Parse and validate the "pageSize" query parameter
-	if pageSize, err :=  webutil.GetQueryParamInt(r, "page_size"); err != nil {
-		errors["page_size"] = "invalid page size"
-	} else if pageSize != 0 {
+	pageSize, err := webutil.GetQueryParamInt(r, "page_size")
+	if err != nil {
+		return ListMoviesRequestQueryParams{}, verrors.NewValidationError("page_size", "invalid page size")
+	}
+	if pageSize != 0 {
 		qParams.PageSize = pageSize
 	}
 
-	// Parse the "sort" query parameter
-	if sort :=  webutil.GetQueryParam(r, "sort"); sort != "" {
+	if sort := webutil.GetQueryParam(r, "sort"); sort != "" {
 		qParams.Sort = sort
 	}
 
-	return qParams, errors
-}
-
-func (q ListMoviesRequestQueryParams) validateRanges() map[string]string {
-	errors := make(map[string]string)
-
-	if q.Page <= 0 {
-		errors["page"] = "must be greater than zero"
-	}
-
-	if q.Page > 10_000_000 {
-		errors["page"] = "must be a maximum of 10 million"
-	}
-
-	if q.PageSize <= 0 {
-		errors["page_size"] = "must be greater than zero"
-	}
-
-	if q.PageSize > 10_000_000 {
-		errors["page_size"] = "must be a maximum of 10 million"
-	}
-
-	if !slices.Contains([]string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}, q.Sort) {
-		errors["sort"] = "invalid sort value"
-	}
-	return errors
+	return qParams, nil
 }
 
 type ListMoviesResponse struct {

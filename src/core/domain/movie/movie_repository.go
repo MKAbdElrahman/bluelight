@@ -1,13 +1,5 @@
 package movie
 
-type MovieFilters struct {
-	Title    string
-	Genres   []string
-	Page     int
-	PageSize int
-	Sort     string
-}
-
 type MoviesListPaginationMetadata struct {
 	TotalCount int
 	TotalPages int
