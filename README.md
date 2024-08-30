@@ -27,4 +27,4 @@
 [x] return one validation error at a time 
 [x] move validation logic to the new movie factory function
 
-[] list movies feature: here we should move the query validation to the application service object  from the contract.  
+[x] list movies feature: here we should move the query validation to the application service object  from the contract.  
