@@ -15,6 +15,7 @@ import (
 
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
+	"bluelight.mkcodedev.com/src/core/domain/token"
 	"bluelight.mkcodedev.com/src/core/domain/user"
 	"bluelight.mkcodedev.com/src/infrastructure/db/repositories"
 	"bluelight.mkcodedev.com/src/infrastructure/mailer"
@@ -62,12 +63,20 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		})
 	movieService := movie.NewMovieService(movieRepository)
 
+	tokenRepository := repositories.NewPostgresTokenRepository(
+		cfg.DB,
+		repositories.PostgresTokenRepositryConfig{
+			Timeout: 3 * time.Second,
+		})
+	tokenService := token.NewTokenService(tokenRepository)
+
 	userRepository := repositories.NewPostgresUserRepository(
 		cfg.DB,
 		repositories.PostgresUserRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	userService := user.NewUserService(userRepository, cfg.Mailer)
+
+	userService := user.NewUserService(userRepository, tokenService, cfg.Mailer)
 	// ROUTES
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))

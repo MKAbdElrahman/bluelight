@@ -1,4 +1,4 @@
-package user
+package token
 
 import (
 	"crypto/rand"
@@ -24,17 +24,17 @@ type TokenRepositoty interface {
 	DeleteAllForUser(scope string, userID int64) error
 }
 
-type TokenService struct {
+type tokenService struct {
 	tokenRepository TokenRepositoty
 }
 
-func NewTokenService(r TokenRepositoty) *TokenService {
-	return &TokenService{
+func NewTokenService(r TokenRepositoty) *tokenService {
+	return &tokenService{
 		tokenRepository: r,
 	}
 }
 
-func (s TokenService) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
+func (s tokenService) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
 	token, err := generateToken(userID, ttl, scope)
 	if err != nil {
 		return nil, err

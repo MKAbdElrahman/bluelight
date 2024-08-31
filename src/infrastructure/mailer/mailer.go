@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"bluelight.mkcodedev.com/src/core/domain/user"
 	"bluelight.mkcodedev.com/src/infrastructure/mailer/templates"
 )
 
@@ -45,19 +46,23 @@ func NewMailer(config Config) *Mailer {
 }
 
 // WelcomeNewRegisteredUser sends a welcome email to a new user.
-func (m *Mailer) WelcomeNewRegisteredUser(ctx context.Context, recipientEmail, recipientName string) error {
-	body, err := m.renderTemplate(ctx, recipientName)
+func (m *Mailer) WelcomeNewRegisteredUser(ctx context.Context, u *user.User, activationToken string) error {
+	body, err := m.renderTemplate(ctx, u, activationToken)
 	if err != nil {
 		return err
 	}
-	payload := m.buildEmailPayload(recipientEmail, recipientName, body)
+	payload := m.buildEmailPayload(u.Email, u.Name, body)
 	return m.sendEmail(payload)
 }
 
 // renderTemplate renders the welcome email template.
-func (m *Mailer) renderTemplate(ctx context.Context, recipientName string) (string, error) {
+func (m *Mailer) renderTemplate(ctx context.Context, u *user.User, activationToken string) (string, error) {
 	var body bytes.Buffer
-	err := templates.UserWelcome(recipientName).Render(ctx, &body)
+	err := templates.UserWelcome(templates.UserWelcomeViewData{
+		RecipientName:   u.Name,
+		RecipientId:     u.Id,
+		ActivationToken: activationToken,
+	}).Render(ctx, &body)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute email template: %w", err)
 	}
@@ -107,6 +112,6 @@ func (m *Mailer) sendEmail(payload EmailPayload) error {
 	}
 
 	time.Sleep(5 * time.Second)
-	
+
 	return nil
 }

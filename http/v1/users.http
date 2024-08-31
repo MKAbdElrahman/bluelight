@@ -3,6 +3,6 @@ POST    http://localhost:3000/v1/users
  
  {
   "name": "Mohamed Kamal",
-  "email": "test2@example.com",
+  "email": "test3@example.com",
   "password": "pas55dword"
 }

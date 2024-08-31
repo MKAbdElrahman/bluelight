@@ -1,6 +1,14 @@
 package templates 
 
-templ UserWelcome(RecipientName string) {
+import "fmt"
+
+type UserWelcomeViewData struct {
+	RecipientName   string
+	RecipientId     int64
+	ActivationToken string
+}
+
+templ UserWelcome(data UserWelcomeViewData) {
 	<html>
 		<head>
 			<style>
@@ -13,11 +21,21 @@ templ UserWelcome(RecipientName string) {
 		</head>
 		<body>
 			<div class="container">
-				<div class="header">Welcome to Bluelight, { RecipientName }!</div>
+				<div class="header">Welcome to Bluelight, { data.RecipientName }!</div>
 				<div class="content">
-					<p>Hi { RecipientName },</p>
-					<p>Thank you for registering at Bluelight!</p>
-					<p>If you have any questions or need help, feel free to reach out to our support team.</p>
+					<p>Hi { data.RecipientName },</p>
+					<p>Thanks for signing up for a Bluelight account. We're excited to have you on board!</p>
+					<p>For future reference, your user ID number is { fmt.Sprint(data.RecipientId) }.</p>
+					<p>
+						Please send a request to the <code>PUT /v1/users/activated</code> endpoint with the
+						following JSON body to activate your account:
+					</p>
+					<pre>
+						<code>
+							{ fmt.Sprintf("token: %s",data.ActivationToken) }
+						</code>
+					</pre>
+					<p>Please note that this is a one-time use token and it will expire in 3 days.</p>
 				</div>
 				<div class="footer">
 					<p>Best regards,<br/>Bluelight Team</p>

@@ -5,11 +5,19 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
+
+	"bluelight.mkcodedev.com/src/core/domain/token"
 )
 
 type Mailer interface {
-	WelcomeNewRegisteredUser(ctx context.Context, recipientEmail, recipientName string) error
+	WelcomeNewRegisteredUser(ctx context.Context, u *User, activationToken string) error
 }
+
+type TokenService interface {
+	New(userID int64, ttl time.Duration, scope string) (*token.Token, error)
+}
+
 type UserRepositoty interface {
 	Create(u *User) error
 	GetByEmail(email string) (*User, error)
@@ -19,12 +27,15 @@ type UserRepositoty interface {
 type UserService struct {
 	userRepository UserRepositoty
 	mailerService  Mailer
+	tokenService   TokenService
 }
 
-func NewUserService(r UserRepositoty, mailerService Mailer) *UserService {
+func NewUserService(r UserRepositoty, tokenService TokenService, mailerService Mailer) *UserService {
+
 	return &UserService{
 		userRepository: r,
 		mailerService:  mailerService,
+		tokenService:   tokenService,
 	}
 }
 
@@ -44,10 +55,16 @@ func (svc *UserService) RegisterUser(backgroundRoutinesWaitGroup *sync.WaitGroup
 	if err != nil {
 		return nil, err
 	}
+
+	token, err := svc.tokenService.New(u.Id, 3*24*time.Hour, token.ScopeActivation)
+	if err != nil {
+		return nil, err
+	}
+
 	backgroundRoutinesWaitGroup.Add(1)
 	background(logger, func() {
 		defer backgroundRoutinesWaitGroup.Done()
-		err = svc.mailerService.WelcomeNewRegisteredUser(context.Background(), u.Email, u.Name)
+		err = svc.mailerService.WelcomeNewRegisteredUser(context.Background(), u, token.Plaintext)
 		if err != nil {
 			logger.Error("failed to send welcome email after retries", "err", err)
 		}

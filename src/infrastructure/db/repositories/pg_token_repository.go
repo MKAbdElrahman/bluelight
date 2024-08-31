@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"bluelight.mkcodedev.com/src/core/domain/user"
+	"bluelight.mkcodedev.com/src/core/domain/token"
 )
 
 type PostgresTokenRepositryConfig struct {
@@ -14,21 +14,21 @@ type PostgresTokenRepositryConfig struct {
 
 type postgresTokenRepositry struct {
 	db     *sql.DB
-	config PostgresUserRepositryConfig
+	config PostgresTokenRepositryConfig
 }
 
-func NewPostgresTokenRepository(db *sql.DB, config PostgresUserRepositryConfig) *postgresTokenRepositry {
+func NewPostgresTokenRepository(db *sql.DB, config PostgresTokenRepositryConfig) *postgresTokenRepositry {
 	return &postgresTokenRepositry{
 		db:     db,
 		config: config,
 	}
 }
 
-func (r *postgresTokenRepositry) Create(token *user.Token) error {
+func (r *postgresTokenRepositry) Create(t *token.Token) error {
 	query := `
 	INSERT INTO tokens (hash, user_id, expiry, scope)
 	VALUES ($1, $2, $3, $4)`
-	args := []any{token.Hash, token.UserId, token.Expiry, token.Scope}
+	args := []any{t.Hash, t.UserId, t.Expiry, t.Scope}
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
 	defer cancel()
 	_, err := r.db.ExecContext(ctx, query, args...)
