@@ -32,26 +32,6 @@ type RouterConfig struct {
 }
 
 func NewRouter(cfg RouterConfig) http.Handler {
-	r := chi.NewRouter()
-
-	em := errorhandler.NewErrorHandler(cfg.Logger)
-	em.LogClientErrors = true
-	em.LogServerErrors = true
-
-	// MIDDLEWARE
-	r.Use(middleware.RateLimiter(em, cfg.LimiterConfig))
-	r.Use(middleware.RequestSizeLimiter(1_048_576)) // 1MB
-	r.Use(middleware.RequestLogger(cfg.Logger))
-	r.Use(middleware.PanicRecoverer(em))
-
-	// INVALID ROUTES HANDLERS
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		em.SendClientError(w, r, apierror.NotFoundError)
-	})
-
-	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		em.SendClientError(w, r, apierror.MethodNotAllowedError)
-	})
 
 	// INFRASTRUCTURE
 
@@ -73,8 +53,32 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		repositories.PostgresUserRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-
 	userService := user.NewUserService(userRepository, tokenRepository, cfg.Mailer)
+
+	/////////
+
+	r := chi.NewRouter()
+
+	em := errorhandler.NewErrorHandler(cfg.Logger)
+	em.LogClientErrors = true
+	em.LogServerErrors = true
+
+	// MIDDLEWARE
+	r.Use(middleware.Authenticate(em, userService))
+	r.Use(middleware.RateLimiter(em, cfg.LimiterConfig))
+	r.Use(middleware.RequestSizeLimiter(1_048_576)) // 1MB
+	r.Use(middleware.RequestLogger(cfg.Logger))
+	r.Use(middleware.PanicRecoverer(em))
+
+	// INVALID ROUTES HANDLERS
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		em.SendClientError(w, r, apierror.NotFoundError)
+	})
+
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		em.SendClientError(w, r, apierror.MethodNotAllowedError)
+	})
+
 	// ROUTES
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))

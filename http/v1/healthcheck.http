@@ -1,1 +1,2 @@
 GET http://localhost:3000/v1/healthcheck
+Authorization: Bearer 4HFCKDIIS3HI6VMKQKXRDEWII4

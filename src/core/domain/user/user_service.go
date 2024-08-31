@@ -48,10 +48,18 @@ type UserActivationParams struct {
 	TokenPlaintext string
 }
 
+func (svc *UserService) GetUserByToken(scope string, plainToken string) (*User, error) {
+	u, err := svc.userRepository.GetByToken(scope, plainToken)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
 func (svc *UserService) ActivateUser(backgroundRoutinesWaitGroup *sync.WaitGroup, logger *slog.Logger, params UserActivationParams) (*User, error) {
 	var t Token
 	t.Plaintext = params.TokenPlaintext
-	verr := t.ValidatePlainTextForm()
+	verr := validatePlainTextPassword(t.Plaintext)
 	if verr != nil {
 		return nil, verr
 	}
@@ -128,12 +136,9 @@ func (s *UserService) NewUserToken(userID int64, ttl time.Duration, scope string
 	return token, err
 }
 
-
 func (s *UserService) DeleteAllTokensForUser(scope string, userID int64) error {
 	return s.tokenRepository.DeleteAllForUser(scope, userID)
 }
-
-
 
 func (s UserService) CreateAuthToken(params CreateAuthTokenParams) (*Token, error) {
 

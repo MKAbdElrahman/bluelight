@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	emailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	emailRX       = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	AnonymousUser = &User{}
 )
 
 type User struct {
@@ -41,7 +42,7 @@ func NewUser(name, email, password string) (*User, error) {
 
 	passwordHash, err := newPasswordHash(password)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
 	return &User{
@@ -49,6 +50,10 @@ func NewUser(name, email, password string) (*User, error) {
 		Email:        email,
 		PasswordHash: passwordHash,
 	}, nil
+}
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 func validatePlainTextPassword(p string) error {

@@ -22,15 +22,15 @@ type Token struct {
 	Scope     string
 }
 
-func (t Token) ValidatePlainTextForm() *verrors.ValidationError {
-	if t.Plaintext == "" {
+func ValidatePlainTextForm(plaintextToken string) *verrors.ValidationError {
+	if plaintextToken == "" {
 		return &verrors.ValidationError{
 			Field:   "token",
 			Message: "must be provided",
 		}
 	}
 
-	if len(t.Plaintext) != 26 {
+	if len(plaintextToken) != 26 {
 		return &verrors.ValidationError{
 			Field:   "token",
 			Message: "must be 26 bytes long",
