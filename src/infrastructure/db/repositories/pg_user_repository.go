@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"time"
@@ -46,6 +47,44 @@ func (r *postgresUserRepositry) Create(u *user.User) error {
 	}
 
 	return nil
+}
+
+func (r *postgresUserRepositry) GetByToken(tokenScope, tokenPlaintext string) (*user.User, error) {
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+	query := `
+SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
+FROM users
+INNER JOIN tokens
+ON users.id = tokens.user_id
+WHERE tokens.hash = $1
+AND tokens.scope = $2
+AND tokens.expiry > $3`
+
+	args := []any{tokenHash[:], tokenScope, time.Now()}
+
+	var u user.User
+
+	ctx, cancel := context.WithTimeout(context.Background(), r.config.Timeout)
+	defer cancel()
+
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(
+		&u.Id,
+		&u.CreatedAt,
+		&u.Name,
+		&u.Email,
+		&u.PasswordHash,
+		&u.Activated,
+		&u.Version,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, user.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &u, nil
 }
 
 func (r *postgresUserRepositry) GetByEmail(email string) (*user.User, error) {

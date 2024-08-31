@@ -86,6 +86,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
 
 	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService))
+	r.Put("/v1/users/activate", userHandlers.NewActivateUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService))
 
 	return r
 }

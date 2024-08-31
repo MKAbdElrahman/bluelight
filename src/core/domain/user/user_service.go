@@ -16,11 +16,14 @@ type Mailer interface {
 
 type TokenService interface {
 	New(userID int64, ttl time.Duration, scope string) (*token.Token, error)
+	DeleteAllForUser(scope string, id int64) error
 }
 
 type UserRepositoty interface {
 	Create(u *User) error
 	GetByEmail(email string) (*User, error)
+	GetByToken(tokenScope, tokenPlaintext string) (*User, error)
+
 	Update(u *User) error
 }
 
@@ -44,7 +47,35 @@ type UserRegisterationParams struct {
 	Email    string
 	Password string
 }
+type UserActivationParams struct {
+	TokenPlaintext string
+}
 
+func (svc *UserService) ActivateUser(backgroundRoutinesWaitGroup *sync.WaitGroup, logger *slog.Logger, params UserActivationParams) (*User, error) {
+	var t token.Token
+	t.Plaintext = params.TokenPlaintext
+	verr := t.ValidatePlainTextForm()
+	if verr != nil {
+		return nil, verr
+	}
+
+	u, err := svc.userRepository.GetByToken(token.ScopeActivation, params.TokenPlaintext)
+	if err != nil {
+		return nil, err
+	}
+	u.Activated = true
+
+	err = svc.userRepository.Update(u)
+	if err != nil {
+		return nil, err
+	}
+
+	err = svc.tokenService.DeleteAllForUser(token.ScopeActivation, u.Id)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
 func (svc *UserService) RegisterUser(backgroundRoutinesWaitGroup *sync.WaitGroup, logger *slog.Logger, params UserRegisterationParams) (*User, error) {
 	u, err := NewUser(params.Name, params.Email, params.Password)
 	if err != nil {

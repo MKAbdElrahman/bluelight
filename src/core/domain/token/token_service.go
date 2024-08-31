@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/base32"
 	"time"
+
+	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
 const (
@@ -17,6 +19,24 @@ type Token struct {
 	UserId    int64
 	Expiry    time.Time
 	Scope     string
+}
+
+func (t Token) ValidatePlainTextForm() *verrors.ValidationError {
+	if t.Plaintext == "" {
+		return &verrors.ValidationError{
+			Field:   "token",
+			Message: "must be provided",
+		}
+	}
+
+	if len(t.Plaintext) != 26 {
+		return &verrors.ValidationError{
+			Field:   "token",
+			Message: "must be 26 bytes long",
+		}
+	}
+
+	return nil
 }
 
 type TokenRepositoty interface {
@@ -41,6 +61,10 @@ func (s tokenService) New(userID int64, ttl time.Duration, scope string) (*Token
 	}
 	err = s.tokenRepository.Create(token)
 	return token, err
+}
+
+func (s tokenService) DeleteAllForUser(scope string, userID int64) error {
+	return s.tokenRepository.DeleteAllForUser(scope, userID)
 }
 
 func generateToken(userId int64, ttl time.Duration, scope string) (*Token, error) {
