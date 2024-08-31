@@ -3,7 +3,6 @@ package userhandlers
 import (
 	"errors"
 	"net/http"
-	"sync"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	v1 "bluelight.mkcodedev.com/src/api/contracts/v1/user"
@@ -13,21 +12,22 @@ import (
 	"bluelight.mkcodedev.com/src/core/domain/verrors"
 )
 
-func NewActivateUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em *errorhandler.ErrorHandeler, userService *user.UserService) http.HandlerFunc {
+func NewCreateAuthTokenHandlerFunc(em *errorhandler.ErrorHandeler, userService *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Request
-		req, requestErr := v1.NewActivateUserRequest(r)
+		req, requestErr := v1.NewCreateAuthTokenRequest(r)
 		if requestErr != nil {
 			em.SendClientError(w, r, requestErr)
 			return
 		}
 
 		// Business
-		params := user.UserActivationParams{
-			TokenPlaintext: req.Body.TokenPlaintext,
+		params := user.CreateAuthTokenParams{
+			Email:    req.Body.Email,
+			Password: req.Body.Password,
 		}
 
-		u, err := userService.ActivateUser(backgroundRoutinesWaitGroup, em.Logger, params)
+		t, err := userService.CreateAuthToken(params)
 		if err != nil {
 
 			var validErr *verrors.ValidationError
@@ -35,20 +35,21 @@ func NewActivateUserHandlerFunc(backgroundRoutinesWaitGroup *sync.WaitGroup, em 
 
 			case errors.As(err, &validErr):
 				em.SendClientError(w, r, apierror.UnprocessableEntityError.WithValidationError(validErr))
-			case errors.Is(err, user.ErrEditConflict):
-				em.SendClientError(w, r, apierror.ConflictError)
 			case errors.Is(err, user.ErrRecordNotFound):
+				em.SendClientError(w, r, apierror.UnauthorizedError)
+			case errors.Is(err, user.ErrInvalidCredentials):
 				em.SendClientError(w, r, apierror.UnauthorizedError)
 			default:
 				em.SendServerError(w, r, apierror.NewInternalServerError(err))
 			}
 			return
 		}
-		res := v1.ActivateUserResponse{
-			Activated: u.Activated,
+		res := v1.CreateAuthResponse{
+			Expiry: t.Expiry,
+			Token:  t.Plaintext,
 		}
 
-		err = jsonio.SendJSON(w, jsonio.Envelope{"user": res}, res.Status(), res.Headers())
+		err = jsonio.SendJSON(w, jsonio.Envelope{"token": res}, res.Status(), res.Headers())
 		if err != nil {
 			em.SendServerError(w, r, apierror.NewInternalServerError(err))
 

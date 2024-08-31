@@ -3,7 +3,7 @@ POST    http://localhost:3000/v1/users
  
  {
   "name": "Mohamed Kamal",
-  "email": "test5@example.com",
+  "email": "test6@example.com",
   "password": "pas55dword"
 }
 
@@ -11,6 +11,14 @@ POST    http://localhost:3000/v1/users
 
 PUT    http://localhost:3000/v1/users/activate
  
- {
+{
   "token": "A3GRYDQ7QEAGGKKRRYC34HAKWU"
+}
+###
+
+POST    http://localhost:3000/v1/tokens/authentication
+
+{
+  "email": "test6@example.com",
+  "password": "pas55dword"
 }

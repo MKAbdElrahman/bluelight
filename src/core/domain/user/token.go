@@ -1,4 +1,4 @@
-package token
+package user
 
 import (
 	"crypto/rand"
@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	ScopeActivation = "activation"
+	ScopeActivation     = "activation"
+	ScopeAuthentication = "authentication"
 )
 
 type Token struct {
@@ -39,32 +40,13 @@ func (t Token) ValidatePlainTextForm() *verrors.ValidationError {
 	return nil
 }
 
-type TokenRepositoty interface {
-	Create(*Token) error
-	DeleteAllForUser(scope string, userID int64) error
+type CreateAuthTokenParams struct {
+	Email    string
+	Password string
 }
 
-type tokenService struct {
-	tokenRepository TokenRepositoty
-}
-
-func NewTokenService(r TokenRepositoty) *tokenService {
-	return &tokenService{
-		tokenRepository: r,
-	}
-}
-
-func (s tokenService) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
-	token, err := generateToken(userID, ttl, scope)
-	if err != nil {
-		return nil, err
-	}
-	err = s.tokenRepository.Create(token)
-	return token, err
-}
-
-func (s tokenService) DeleteAllForUser(scope string, userID int64) error {
-	return s.tokenRepository.DeleteAllForUser(scope, userID)
+func (p CreateAuthTokenParams) Validate() *verrors.ValidationError {
+	return nil
 }
 
 func generateToken(userId int64, ttl time.Duration, scope string) (*Token, error) {

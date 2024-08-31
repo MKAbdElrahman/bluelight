@@ -21,7 +21,6 @@ func newPasswordHash(plaintextPassword string) (passwordHash, error) {
 	return hash, nil
 }
 
-
 func (p passwordHash) isHashedFrom(plaintextPassword string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword(p, []byte(plaintextPassword))
 	if err != nil {

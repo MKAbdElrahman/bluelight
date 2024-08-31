@@ -15,7 +15,6 @@ import (
 
 	"bluelight.mkcodedev.com/src/api/handlers/middleware"
 	"bluelight.mkcodedev.com/src/core/domain/movie"
-	"bluelight.mkcodedev.com/src/core/domain/token"
 	"bluelight.mkcodedev.com/src/core/domain/user"
 	"bluelight.mkcodedev.com/src/infrastructure/db/repositories"
 	"bluelight.mkcodedev.com/src/infrastructure/mailer"
@@ -68,7 +67,6 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		repositories.PostgresTokenRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	tokenService := token.NewTokenService(tokenRepository)
 
 	userRepository := repositories.NewPostgresUserRepository(
 		cfg.DB,
@@ -76,7 +74,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 			Timeout: 3 * time.Second,
 		})
 
-	userService := user.NewUserService(userRepository, tokenService, cfg.Mailer)
+	userService := user.NewUserService(userRepository, tokenRepository, cfg.Mailer)
 	// ROUTES
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
 	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
@@ -87,6 +85,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService))
 	r.Put("/v1/users/activate", userHandlers.NewActivateUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService))
+	r.Post("/v1/tokens/authentication", userHandlers.NewCreateAuthTokenHandlerFunc(em, userService))
 
 	return r
 }

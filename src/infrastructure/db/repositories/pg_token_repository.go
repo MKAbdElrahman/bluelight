@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"bluelight.mkcodedev.com/src/core/domain/token"
+	"bluelight.mkcodedev.com/src/core/domain/user"
 )
 
 type PostgresTokenRepositryConfig struct {
@@ -24,7 +24,7 @@ func NewPostgresTokenRepository(db *sql.DB, config PostgresTokenRepositryConfig)
 	}
 }
 
-func (r *postgresTokenRepositry) Create(t *token.Token) error {
+func (r *postgresTokenRepositry) Create(t *user.Token) error {
 	query := `
 	INSERT INTO tokens (hash, user_id, expiry, scope)
 	VALUES ($1, $2, $3, $4)`

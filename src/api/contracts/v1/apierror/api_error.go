@@ -30,7 +30,7 @@ var (
 
 	UnauthorizedError = &ClientError{
 		Code:              401,
-		UserFacingMessage: "The request requires user authentication.",
+		UserFacingMessage: "Invalid authentication credentials.",
 	}
 
 	ForbiddenError = &ClientError{

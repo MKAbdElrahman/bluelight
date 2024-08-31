@@ -6,17 +6,10 @@ import (
 	"log/slog"
 	"sync"
 	"time"
-
-	"bluelight.mkcodedev.com/src/core/domain/token"
 )
 
 type Mailer interface {
 	WelcomeNewRegisteredUser(ctx context.Context, u *User, activationToken string) error
-}
-
-type TokenService interface {
-	New(userID int64, ttl time.Duration, scope string) (*token.Token, error)
-	DeleteAllForUser(scope string, id int64) error
 }
 
 type UserRepositoty interface {
@@ -26,19 +19,23 @@ type UserRepositoty interface {
 
 	Update(u *User) error
 }
-
-type UserService struct {
-	userRepository UserRepositoty
-	mailerService  Mailer
-	tokenService   TokenService
+type TokenRepository interface {
+	Create(*Token) error
+	DeleteAllForUser(scope string, userID int64) error
 }
 
-func NewUserService(r UserRepositoty, tokenService TokenService, mailerService Mailer) *UserService {
+type UserService struct {
+	userRepository  UserRepositoty
+	tokenRepository TokenRepository
+	mailerService   Mailer
+}
+
+func NewUserService(ur UserRepositoty, tr TokenRepository, ms Mailer) *UserService {
 
 	return &UserService{
-		userRepository: r,
-		mailerService:  mailerService,
-		tokenService:   tokenService,
+		userRepository:  ur,
+		mailerService:   ms,
+		tokenRepository: tr,
 	}
 }
 
@@ -52,14 +49,14 @@ type UserActivationParams struct {
 }
 
 func (svc *UserService) ActivateUser(backgroundRoutinesWaitGroup *sync.WaitGroup, logger *slog.Logger, params UserActivationParams) (*User, error) {
-	var t token.Token
+	var t Token
 	t.Plaintext = params.TokenPlaintext
 	verr := t.ValidatePlainTextForm()
 	if verr != nil {
 		return nil, verr
 	}
 
-	u, err := svc.userRepository.GetByToken(token.ScopeActivation, params.TokenPlaintext)
+	u, err := svc.userRepository.GetByToken(ScopeActivation, params.TokenPlaintext)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +67,7 @@ func (svc *UserService) ActivateUser(backgroundRoutinesWaitGroup *sync.WaitGroup
 		return nil, err
 	}
 
-	err = svc.tokenService.DeleteAllForUser(token.ScopeActivation, u.Id)
+	err = svc.DeleteAllTokensForUser(ScopeActivation, u.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +84,7 @@ func (svc *UserService) RegisterUser(backgroundRoutinesWaitGroup *sync.WaitGroup
 		return nil, err
 	}
 
-	token, err := svc.tokenService.New(u.Id, 3*24*time.Hour, token.ScopeActivation)
+	token, err := svc.NewUserToken(u.Id, 3*24*time.Hour, ScopeActivation)
 	if err != nil {
 		return nil, err
 	}
@@ -120,4 +117,46 @@ func background(logger *slog.Logger, fn func()) {
 		fn()
 	}()
 
+}
+
+func (s *UserService) NewUserToken(userID int64, ttl time.Duration, scope string) (*Token, error) {
+	token, err := generateToken(userID, ttl, scope)
+	if err != nil {
+		return nil, err
+	}
+	err = s.tokenRepository.Create(token)
+	return token, err
+}
+
+
+func (s *UserService) DeleteAllTokensForUser(scope string, userID int64) error {
+	return s.tokenRepository.DeleteAllForUser(scope, userID)
+}
+
+
+
+func (s UserService) CreateAuthToken(params CreateAuthTokenParams) (*Token, error) {
+
+	if err := params.Validate(); err != nil {
+		return nil, err
+	}
+	u, err := s.userRepository.GetByEmail(params.Email)
+	if err != nil {
+		return nil, err
+	}
+	match, err := u.PasswordHash.isHashedFrom(params.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	if !match {
+		return nil, ErrInvalidCredentials
+	}
+
+	t, err := s.NewUserToken(u.Id, 24*time.Hour, ScopeAuthentication)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
