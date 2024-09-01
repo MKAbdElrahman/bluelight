@@ -29,6 +29,7 @@ type RouterConfig struct {
 	Mailer              *mailer.Mailer
 	LimiterConfig       middleware.RateLimiterConfig
 	BackgroundWaitGroup *sync.WaitGroup
+	TrustedOrigins      []string
 }
 
 func NewRouter(cfg RouterConfig) http.Handler {
@@ -70,11 +71,12 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	em.LogServerErrors = true
 
 	// MIDDLEWARE
-	r.Use(middleware.Authenticate(em, userService))
+	r.Use(middleware.PanicRecoverer(em))
+	r.Use(middleware.RequestLogger(cfg.Logger))
+	r.Use(middleware.CQRS(em, cfg.TrustedOrigins))
 	r.Use(middleware.RateLimiter(em, cfg.LimiterConfig))
 	r.Use(middleware.RequestSizeLimiter(1_048_576)) // 1MB
-	r.Use(middleware.RequestLogger(cfg.Logger))
-	r.Use(middleware.PanicRecoverer(em))
+	r.Use(middleware.Authenticate(em, userService))
 
 	// INVALID ROUTES HANDLERS
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

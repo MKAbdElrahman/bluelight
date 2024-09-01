@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -40,7 +41,9 @@ type dbConfig struct {
 	maxIdleConns int
 	maxIdleTime  time.Duration
 }
-
+type cors struct {
+	trustedOrigins []string
+}
 type smtp struct {
 	host   string
 	sender string
@@ -64,6 +67,7 @@ func main() {
 		db      dbConfig
 		limiter middleware.RateLimiterConfig
 		smtp    smtp
+		cors    cors
 	}
 
 	flag.IntVar(&cfg.server.port, "port", 3000, "API server port")
@@ -85,6 +89,11 @@ func main() {
 
 	flag.StringVar(&cfg.smtp.host, "smtp-base-url", "https://sandbox.api.mailtrap.io", "SMTP base url")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "no-reply@bluelight.mkcodedev.net", "SMTP sender")
+
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
 
 	flag.Parse()
 
@@ -119,6 +128,7 @@ func main() {
 	// ROUTER
 	backgroundRoutinesWaitGroup := &sync.WaitGroup{}
 	router := router.NewRouter(router.RouterConfig{
+		TrustedOrigins:      cfg.cors.trustedOrigins,
 		Logger:              logger,
 		API_Environment:     cfg.server.env,
 		API_Version:         version,
