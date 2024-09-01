@@ -55,6 +55,12 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		})
 	userService := user.NewUserService(userRepository, tokenRepository, cfg.Mailer)
 
+	permissionsRepository := repositories.NewPostgresPermissionRepository(cfg.DB,
+		repositories.PostgresPermissionRepositryConfig{
+			Timeout: 3 * time.Second,
+		})
+	permissionsService := user.NewPermissionsService(permissionsRepository)
+
 	/////////
 
 	r := chi.NewRouter()
@@ -88,11 +94,15 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Route("/v1/movies", func(r chi.Router) {
 		r.Use(middleware.RequireActivatedUser(em))
 
-		r.Post("/", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
-		r.Patch("/{id}", movieHandlers.NewUpdateMovieHandlerFunc(em, movieService))
-		r.Get("/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
-		r.Get("/", movieHandlers.NewListMovieHandlerFunc(em, movieService))
-		r.Delete("/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
+		// Write endpoints (require write permission)
+		r.With(middleware.RequirePermission(em, permissionsService, "movies:write")).Post("/", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, permissionsService, "movies:write")).Patch("/{id}", movieHandlers.NewUpdateMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, permissionsService, "movies:write")).Delete("/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
+
+		// Read endpoints (require read permission)
+		r.With(middleware.RequirePermission(em, permissionsService, "movies:read")).Get("/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, permissionsService, "movies:read")).Get("/", movieHandlers.NewListMovieHandlerFunc(em, movieService))
+
 	})
 
 	// User routes
