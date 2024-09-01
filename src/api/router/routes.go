@@ -53,13 +53,13 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		repositories.PostgresUserRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	userService := user.NewUserService(userRepository, tokenRepository, cfg.Mailer)
 
 	permissionsRepository := repositories.NewPostgresPermissionRepository(cfg.DB,
 		repositories.PostgresPermissionRepositryConfig{
 			Timeout: 3 * time.Second,
 		})
-	permissionsService := user.NewPermissionsService(permissionsRepository)
+
+	userService := user.NewUserService(userRepository, permissionsRepository, tokenRepository, cfg.Mailer)
 
 	/////////
 
@@ -95,13 +95,13 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		r.Use(middleware.RequireActivatedUser(em))
 
 		// Write endpoints (require write permission)
-		r.With(middleware.RequirePermission(em, permissionsService, "movies:write")).Post("/", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
-		r.With(middleware.RequirePermission(em, permissionsService, "movies:write")).Patch("/{id}", movieHandlers.NewUpdateMovieHandlerFunc(em, movieService))
-		r.With(middleware.RequirePermission(em, permissionsService, "movies:write")).Delete("/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, userService, "movies:write")).Post("/", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, userService, "movies:write")).Patch("/{id}", movieHandlers.NewUpdateMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, userService, "movies:write")).Delete("/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
 
 		// Read endpoints (require read permission)
-		r.With(middleware.RequirePermission(em, permissionsService, "movies:read")).Get("/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
-		r.With(middleware.RequirePermission(em, permissionsService, "movies:read")).Get("/", movieHandlers.NewListMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, userService, "movies:read")).Get("/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
+		r.With(middleware.RequirePermission(em, userService, "movies:read")).Get("/", movieHandlers.NewListMovieHandlerFunc(em, movieService))
 
 	})
 

@@ -25,17 +25,19 @@ type TokenRepository interface {
 }
 
 type UserService struct {
-	userRepository  UserRepositoty
-	tokenRepository TokenRepository
-	mailerService   Mailer
+	userRepository        UserRepositoty
+	tokenRepository       TokenRepository
+	permissionsRepository PermissionsRepository
+	mailerService         Mailer
 }
 
-func NewUserService(ur UserRepositoty, tr TokenRepository, ms Mailer) *UserService {
+func NewUserService(ur UserRepositoty, pr PermissionsRepository, tr TokenRepository, ms Mailer) *UserService {
 
 	return &UserService{
-		userRepository:  ur,
-		mailerService:   ms,
-		tokenRepository: tr,
+		userRepository:        ur,
+		mailerService:         ms,
+		tokenRepository:       tr,
+		permissionsRepository: pr,
 	}
 }
 
@@ -88,6 +90,11 @@ func (svc *UserService) RegisterUser(backgroundRoutinesWaitGroup *sync.WaitGroup
 	}
 
 	err = svc.userRepository.Create(u)
+	if err != nil {
+		return nil, err
+	}
+
+	err = svc.permissionsRepository.AddForUser(u.Id, "movies:read")
 	if err != nil {
 		return nil, err
 	}
@@ -164,4 +171,8 @@ func (s UserService) CreateAuthToken(params CreateAuthTokenParams) (*Token, erro
 	}
 
 	return t, nil
+}
+
+func (s UserService) GetAllPermissionsForUser(userId int64) (Permissions, error) {
+	return s.permissionsRepository.GetAllForUser(userId)
 }

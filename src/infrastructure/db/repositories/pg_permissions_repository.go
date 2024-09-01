@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"bluelight.mkcodedev.com/src/core/domain/user"
+	"github.com/lib/pq"
 )
 
 type PostgresPermissionRepositryConfig struct {
@@ -53,4 +54,14 @@ WHERE users.id = $1`
 		return nil, err
 	}
 	return permissions, nil
+}
+
+func (r *postgresPermissionRepositry) AddForUser(userId int64, codes ...string) error {
+	query := `
+	INSERT INTO users_permissions
+	SELECT $1, permissions.id FROM permissions WHERE permissions.code = ANY($2)`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_, err := r.db.ExecContext(ctx, query, userId, pq.Array(codes))
+	return err
 }
