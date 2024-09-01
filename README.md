@@ -9,13 +9,15 @@
 ## Features
 
 - Sending JSON Respnses and Parsing JSON Requests
+- Runtime app configutation
 - Database setup and confguration
 - SQL migrations
 - CRUD operations
 - Optimistic Concurrency Control
 - Filtering, Sorting, and Pagination
 - Rate limiting
-- Graceful shutodwn
+- Sending Emails and Calling external APIs
+- Graceful shutodown
 - Authentication And Authorization
 - Background operations
 - CORS
