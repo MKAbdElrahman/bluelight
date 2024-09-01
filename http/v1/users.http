@@ -3,22 +3,22 @@ POST    http://localhost:3000/v1/users
  
  {
   "name": "Mohamed Kamal",
-  "email": "test7@example.com",
+  "email": "test8@example.com",
   "password": "pas55dword"
 }
 
 ###
 
 PUT    http://localhost:3000/v1/users/activate
- 
+
 {
-  "token": "A3GRYDQ7QEAGGKKRRYC34HAKWU"
+  "token": "6WVXZ2AA3KYQZ6IXV564VHH25M"
 }
 ###
 
 POST    http://localhost:3000/v1/tokens/authentication
 
 {
-  "email": "test7@example.com",
+  "email": "test8@example.com",
   "password": "pas55dword"
 }

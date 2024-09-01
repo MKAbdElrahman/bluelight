@@ -9,7 +9,8 @@ POST    http://localhost:3000/v1/movies
 }
 
 ###
-GET http://localhost:3000/v1/movies/8
+GET http://localhost:3000/v1/movies/2
+Authorization: Bearer 6J37MFHS5EM4VMBWI3FZJTMCEE
 
 
 

@@ -79,14 +79,23 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		em.SendClientError(w, r, apierror.MethodNotAllowedError)
 	})
 
-	// ROUTES
-	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
-	r.Post("/v1/movies", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
-	r.Patch("/v1/movies/{id}", movieHandlers.NewUpdateMovieHandlerFunc(em, movieService))
-	r.Get("/v1/movies/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
-	r.Get("/v1/movies", movieHandlers.NewListMovieHandlerFunc(em, movieService))
-	r.Delete("/v1/movies/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
+	// ROUTE
 
+	// Health check route
+	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
+
+	// MOVIE ROUTES
+	r.Route("/v1/movies", func(r chi.Router) {
+		r.Use(middleware.RequireActivatedUser(em))
+
+		r.Post("/", movieHandlers.NewCreateMovieHandlerFunc(em, movieService))
+		r.Patch("/{id}", movieHandlers.NewUpdateMovieHandlerFunc(em, movieService))
+		r.Get("/{id}", movieHandlers.NewShowMovieHandlerFunc(em, movieService))
+		r.Get("/", movieHandlers.NewListMovieHandlerFunc(em, movieService))
+		r.Delete("/{id}", movieHandlers.NewDeleteMovieHandlerFunc(em, movieService))
+	})
+
+	// User routes
 	r.Post("/v1/users", userHandlers.NewRegisterUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService))
 	r.Put("/v1/users/activate", userHandlers.NewActivateUserHandlerFunc(cfg.BackgroundWaitGroup, em, userService))
 	r.Post("/v1/tokens/authentication", userHandlers.NewCreateAuthTokenHandlerFunc(em, userService))
