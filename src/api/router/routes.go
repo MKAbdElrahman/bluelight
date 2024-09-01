@@ -2,6 +2,7 @@ package router
 
 import (
 	"database/sql"
+	"expvar"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -72,6 +73,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	// MIDDLEWARE
 	r.Use(middleware.PanicRecoverer(em))
+	r.Use(middleware.Metrics(em))
 	r.Use(middleware.RequestLogger(cfg.Logger))
 	r.Use(middleware.CQRS(em, cfg.TrustedOrigins))
 	r.Use(middleware.RateLimiter(em, cfg.LimiterConfig))
@@ -91,6 +93,9 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	// Health check route
 	r.Get("/v1/healthcheck", healthCheckHandlers.NewHealthCheckHandlerFunc(em, cfg.API_Environment, cfg.API_Version))
+
+	// EXPVAR route
+	r.Handle("/debug/vars", expvar.Handler())
 
 	// MOVIE ROUTES
 	r.Route("/v1/movies", func(r chi.Router) {
