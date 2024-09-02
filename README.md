@@ -27,7 +27,7 @@ graph LR
 - To prepare responses, handlers talk to the application services layer which should be representative of the usecases.
 
 
-- The domain objects should have no clue that they are bing used in a web application or stored using a sql database. I'm strongly againest putting annotaions or core domain entities.
+- The domain objects should have no clue that they are bing used in a web application or stored using a sql database. I'm strongly againest putting annotaions on core domain entities.
 
 
 
