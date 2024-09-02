@@ -10,13 +10,18 @@ tasks:
   watch: 'wgo -file=.go  -file=.templ -xfile=_templ.go templ generate :: go run ./src/api/cmd {{.CLI_ARGS}}'
   run: go run ./src/api/cmd  -db-dsn=$BLUELIGHT_DB_DSN {{.CLI_ARGS}}
   audit:
+    deps: [vendor]
     cmds:
-      - go mod tidy
-      - go mod verify
       - go fmt ./...
       - go vet ./...
       - staticcheck ./...
       - go test -race -vet=off ./...
+  vendor:
+    cmds:
+      - go mod tidy
+      - go mod verify
+      - go mod vendor
+
   psql: psql  $POSTGRESQL_URL
 
   ## DATABASE MIGRATIONS

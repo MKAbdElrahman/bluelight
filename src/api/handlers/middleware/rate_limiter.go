@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"net"
 	"net/http"
 	"sync"
 	"time"
 
 	"bluelight.mkcodedev.com/src/api/contracts/v1/apierror"
 	"bluelight.mkcodedev.com/src/api/handlers/errorhandler"
+	"github.com/tomasen/realip" // New import
 	"golang.org/x/time/rate"
 )
 
@@ -43,12 +43,7 @@ func RateLimiter(em *errorhandler.ErrorHandeler, cfg RateLimiterConfig) middlewa
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if cfg.Enabled {
-				ip, _, err := net.SplitHostPort(r.RemoteAddr)
-				if err != nil {
-					em.SendServerError(w, r,
-						apierror.NewInternalServerError(err))
-					return
-				}
+				ip := realip.FromRequest(r)
 				mu.Lock()
 				if _, found := clients[ip]; !found {
 					clients[ip] = &client{limiter: rate.NewLimiter(rate.Limit(cfg.RPS), cfg.Burst)}
