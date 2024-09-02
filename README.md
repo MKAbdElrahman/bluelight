@@ -48,3 +48,16 @@ graph LR
 - Background operations
 - CORS
 - Metrics and Monitoring
+
+
+## Acknowledgments 
+
+- I learned alot from Alex Edwards books (I think its the best resource to learn Go).
+
+- I also learned alot from Kent Beck books and his ideas about software design. I recommend alot reading his
+  recent Book Tidy First. 
+
+- I also can't recommend more Mark Richards and Neals Ford writings about software architecture.
+
+Thank you All
+Mohamed Kamal
