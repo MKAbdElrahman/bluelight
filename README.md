@@ -32,12 +32,6 @@ graph LR
 
 
 
-
-- Demo REST API 
-- Implemented with ideas from DDD and clean architecure.
-  
-
-
 ## Features
 
 - Sending JSON Respnses and Parsing JSON Requests
