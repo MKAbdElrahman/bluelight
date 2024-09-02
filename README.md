@@ -50,6 +50,19 @@ graph LR
 - Metrics and Monitoring
 
 
+
+##  Design Guidelines 
+
+### Context Usage
+ **Context is for Cancellation:** Use `context.Context` only for cancellation and timeouts, not for passing dependencies.
+
+ **Avoid `context.Value` for Dependencies:** Passing loggers or other data via `context.Value` hides dependencies and risks runtime errors due to lack of type safety.
+
+ **Prefer Explicit Injection:** Always pass dependencies like loggers directly in constructors or function parameters for clarity and safety.
+
+Read more at [Context is for cancelation
+](https://dave.cheney.net/2017/01/26/context-is-for-cancelation)
+
 ## Acknowledgments 
 
 - I learned alot from Alex Edwards books (I think its the best resource to learn Go).
