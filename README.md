@@ -60,4 +60,5 @@ graph LR
 - I also can't recommend more Mark Richards and Neals Ford writings about software architecture.
 
 Thank you All
+
 Mohamed Kamal
