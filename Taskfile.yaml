@@ -8,6 +8,7 @@ tasks:
 
   ## API
   watch: 'wgo -file=.go  -file=.templ -xfile=_templ.go templ generate :: go run ./src/api/cmd {{.CLI_ARGS}}'
+  build: GOOS=linux GOARCH=amd64 go build -ldflags='-s -w'  -o=./bin/linux_amd64/api  ./src/api/cmd 
   run: go run ./src/api/cmd  -db-dsn=$BLUELIGHT_DB_DSN {{.CLI_ARGS}}
   audit:
     deps: [vendor]
