@@ -8,8 +8,15 @@ tasks:
 
   ## API
   watch: 'wgo -file=.go  -file=.templ -xfile=_templ.go templ generate :: go run ./src/api/cmd {{.CLI_ARGS}}'
-  run: go run ./src/api/cmd {{.CLI_ARGS}}
-
+  run: go run ./src/api/cmd  -db-dsn=$BLUELIGHT_DB_DSN {{.CLI_ARGS}}
+  audit:
+    cmds:
+      - go mod tidy
+      - go mod verify
+      - go fmt ./...
+      - go vet ./...
+      - staticcheck ./...
+      - go test -race -vet=off ./...
   psql: psql  $POSTGRESQL_URL
 
   ## DATABASE MIGRATIONS
@@ -41,4 +48,4 @@ tasks:
     cmds:
       - migrate -path=$MIGRATIONS_DIR -database=$POSTGRESQL_URL version
   templ-install: go install github.com/a-h/templ/cmd/templ@latest
-
+  staticcheck-install: go install honnef.co/go/tools/cmd/staticcheck@latest

@@ -80,7 +80,7 @@ func main() {
 	flag.DurationVar(&cfg.server.shutdownTimeout, "server-shutdown-timeout", 30*time.Second, "Maximum duration to wait for active connections to close during server shutdown.")
 	flag.BoolVar(&cfg.server.version, "version", false, "Show API version")
 
-	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("BLUELIGHT_DB_DSN"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "", "PostgreSQL DSN")
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
@@ -104,6 +104,7 @@ func main() {
 		os.Exit(0)
 	}
 
+	// This is just for test!!
 	mailtrapURL := "https://sandbox.api.mailtrap.io/api/send/3109121"
 	apiKey := "245e889dc812ac10b67d19e4801ba7e7"
 	senderEmail := cfg.smtp.sender
@@ -151,7 +152,7 @@ func main() {
 	expvar.Publish("timestamp", expvar.Func(func() any {
 		return time.Now().Unix()
 	}))
-	
+
 	// SERVER
 	err = serve(backgroundRoutinesWaitGroup, logger, router, cfg.server)
 	if err != nil {
