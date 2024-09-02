@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
@@ -25,7 +26,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const version = "0.0.3"
+var version = Version()
 
 type serverConfig struct {
 	port            int
@@ -227,4 +228,26 @@ func openDB(cfg dbConfig) (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func Version() string {
+	var revision string
+	var modified bool
+	bi, ok := debug.ReadBuildInfo()
+	if ok {
+		for _, s := range bi.Settings {
+			switch s.Key {
+			case "vcs.revision":
+				revision = s.Value
+			case "vcs.modified":
+				if s.Value == "true" {
+					modified = true
+				}
+			}
+		}
+	}
+	if modified {
+		return fmt.Sprintf("%s-dirty", revision)
+	}
+	return revision
 }
