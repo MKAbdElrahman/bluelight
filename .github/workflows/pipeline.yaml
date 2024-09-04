@@ -1,0 +1,10 @@
+name: CI Checks
+
+on: push
+jobs:
+  build:
+    name: Build App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Task
+        uses: arduino/setup-task@v2
