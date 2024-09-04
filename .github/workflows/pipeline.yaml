@@ -12,10 +12,9 @@ jobs:
           go-version:  ^1.23
       - uses: arduino/setup-task@v2
     
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.60
+      - name: Run Lint
+        run: task lint
+
   test:
     name: Test Application
     runs-on: ubuntu-latest
