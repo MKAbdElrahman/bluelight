@@ -1,7 +1,7 @@
 package errorhandler
 
 import (
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -27,7 +27,7 @@ func NewErrorHandler(logger *slog.Logger) *ErrorHandeler {
 // SendServerError handles server-side errors.
 func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, serverErr *apierror.ServerError) {
 	if e.LogServerErrors {
-		logError(e.Logger, r, fmt.Errorf(serverErr.InternalMessage), serverErr.Code)
+		logError(e.Logger, r, errors.New(serverErr.InternalMessage), serverErr.Code)
 	}
 
 	data := jsonio.Envelope{"error": http.StatusText(serverErr.Code)}
@@ -44,7 +44,7 @@ func (e *ErrorHandeler) SendServerError(w http.ResponseWriter, r *http.Request, 
 // SendClientError handles client-side errors.
 func (e *ErrorHandeler) SendClientError(w http.ResponseWriter, r *http.Request, clientErr *apierror.ClientError) {
 	if e.LogClientErrors {
-		logError(e.Logger, r, fmt.Errorf(clientErr.UserFacingMessage), clientErr.Code)
+		logError(e.Logger, r, errors.New(clientErr.UserFacingMessage), clientErr.Code)
 	}
 
 	data := jsonio.Envelope{"error": clientErr}

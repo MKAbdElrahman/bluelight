@@ -20,6 +20,6 @@ func SendJSON(w http.ResponseWriter, data any, httpStatus int, headers http.Head
 	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(httpStatus)
-	w.Write([]byte(js))
-	return nil
+	_, err = w.Write([]byte(js))
+	return err
 }
