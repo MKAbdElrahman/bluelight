@@ -25,3 +25,9 @@ jobs:
         run: |
           mkdir artifacts
           cp bin/linux_amd64/api artifacts/.
+      
+      - name: Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: api
+          path: artifacts
