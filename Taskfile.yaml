@@ -22,7 +22,10 @@ tasks:
       - go mod tidy
       - go mod verify
       - go mod vendor
-
+  test:
+    desc: Run all tests 
+    cmds:
+      - go test ./... 
   psql: psql  $POSTGRESQL_URL
 
   ## DATABASE MIGRATIONS
