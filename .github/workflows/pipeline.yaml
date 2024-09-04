@@ -20,3 +20,8 @@ jobs:
 
       - name: Build
         run: task build
+
+      - name: Copy Files
+        run: |
+          mkdir artifacts
+          cp bin/linux_amd64/api artifacts/.
