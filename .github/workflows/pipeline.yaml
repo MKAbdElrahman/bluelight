@@ -3,8 +3,8 @@ name: CI Pipeline
 on: push
 
 jobs:
-  setup:
-    name: Setup Environment
+  lint:
+    name: Lint Application
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,13 +15,7 @@ jobs:
       - name: Install Task CLI
         uses: arduino/setup-task@v2
         with:
-          version: 3.x  
-
-  lint:
-    name: Lint Application
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
+          version: 3.x
       - name: Install GolangCI-Lint
         run: task instal-golangci-lint
       - name: Run Lint
@@ -32,6 +26,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - name: Install Task CLI
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
       - name: Run Test
         run: task test
 
@@ -40,14 +43,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - name: Install Task CLI
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
       - name: Build
         run: task build
-
       - name: Copy Files
         run: |
           mkdir artifacts
           cp bin/linux_amd64/api artifacts/.
-
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
         with:
